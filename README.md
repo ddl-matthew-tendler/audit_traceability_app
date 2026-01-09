@@ -27,13 +27,13 @@ cp -r example_domino_frontend_code/* /path/to/your/cursor/project/
 
 # Copy only the root-level hidden folders and files from this project
 cp -r .cursor /path/to/your/cursor/project/
-cp domino-logo.svg swagger.json /path/to/your/cursor/project/
+cp .gitignore domino-logo.svg swagger.json /path/to/your/cursor/project/
 ```
 
 Or in a single command:
 ```bash
 cp -r example_domino_frontend_code/* /path/to/your/cursor/project/ && \
-cp -r .cursor domino-logo.svg swagger.json /path/to/your/cursor/project/
+cp -r .cursor .gitignore domino-logo.svg swagger.json /path/to/your/cursor/project/
 ```
 
 This ensures your Cursor project includes:
@@ -41,6 +41,7 @@ This ensures your Cursor project includes:
 - Configuration files (`Makefile`, `package.json`, `domino.yml`, etc.)
 - Build and deployment files (`build/`, `dev/`, `helm/`)
 - **Cursor rules** (`.cursor/`) for code analysis and completions
+- **Git ignore configuration** (`.gitignore`)
 - **Domino logo** for branding
 - **Swagger API documentation** for reference
 
