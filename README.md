@@ -19,18 +19,30 @@ This script will:
 
 ### Using with Cursor
 
-When moving the downloaded code into a Cursor project, make sure to include the `.cursor` rules folder (which is hidden on macOS):
+To set up your Cursor project with all necessary files:
 
-**On macOS:**
 ```bash
-# Show hidden files in Finder
-Command + Shift + .
+# Copy the frontend code (without hidden folders from within it)
+cp -r example_domino_frontend_code/* /path/to/your/cursor/project/
 
-# Or copy via terminal
-cp -r example_domino_frontend_code/.cursor /path/to/your/cursor/project/
+# Copy only the root-level hidden folders and files from this project
+cp -r .cursor /path/to/your/cursor/project/
+cp domino-logo.svg swagger.json /path/to/your/cursor/project/
 ```
 
-The `.cursor` folder contains configuration and rules that Cursor uses for code analysis and completions. Without it, you'll lose important context and custom rules.
+Or in a single command:
+```bash
+cp -r example_domino_frontend_code/* /path/to/your/cursor/project/ && \
+cp -r .cursor domino-logo.svg swagger.json /path/to/your/cursor/project/
+```
+
+This ensures your Cursor project includes:
+- The `frontend/` folder with all application code
+- Configuration files (`Makefile`, `package.json`, `domino.yml`, etc.)
+- Build and deployment files (`build/`, `dev/`, `helm/`)
+- **Cursor rules** (`.cursor/`) for code analysis and completions
+- **Domino logo** for branding
+- **Swagger API documentation** for reference
 
 ## Documentation
 
