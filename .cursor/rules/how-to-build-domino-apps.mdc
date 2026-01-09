@@ -1,0 +1,46 @@
+---
+name: how-to-build-domino-apps
+description: This is a rule that describes how to build domino apps, best practices, api guidelines and technical constraints, UI, components, etc.
+---
+
+# basic stack
+Apps should be architected as basic python back-end (using fast API) and javascript / html / css front-end. 
+
+Avoid inline styles and javascript and use statically referenced files for that kind of thing.
+
+# UI components and theme
+The theme should be light themed, and follow a look and feel similar to the Domino UI experience. An example of this (steal the html and css and header and logo) can be scraped here: https://navigation-prototype-five.vercel.app/develop
+
+To make sure we're using the correct logo, use this one provided in the project directory called: domino-logo.svg
+
+Do not make fake top level nav items unless the app actually has real destinations for those nav items.
+
+If possible, use (or copy) UI components for field elements, filters, etc from the included code in the subfolder: example_domino_frontend_code
+
+But rather than using a full React application with JSX/TSX and a build step, it should use React with React.createElement() calls directly in vanilla JavaScript and be as lightweight as possible, only use components as we need them. Definitely re-use any styling you can find as part of that example_domino_frontend_code (but don't rely on referencing tha for the real app, it's a reference and will eventually get deleted before deploying the app).
+
+If a relevant component can't be found in example_domino_frontend_code feel free to use one from the Ant Design library: https://ant.design/components/overview
+
+# charts
+Charts should use the highcharts js library if charts are ever needed. 
+
+# fast API routes and html / js urls
+Because when running an app inside domino its behind an nginx proxy that modifies the root url, the app can't rely on absolute url paths to make calls to its backend. Consider using relative or dynamic URLs or detect the path so these calls work.
+
+# Domino API calls
+Domino API requests are authenticated using a bearer token that when running within the platform can be retrieved using response = requests.get("http://localhost:8899/access-token") and is used to make API calls using a header:  headers = {"Authorization": token} and if the token starts with Bearer we need to include that.
+
+re-aquire that access token on EVERY api call because it expires very quickly. 
+
+if API_KEY_OVERRIDE env var is present than use that instead (because running outside domino), this can be used instead and is a long lasting API key we can use outside of domino for the same API requests and is used using the header name: X-Domino-Api-Key
+
+Domino API documentation can be found in a local project file: swagger.json
+
+Some API calls require knowing the project name and project owner name in order to form a URL, this can be automatically provided by the domino platform with these env variables: DOMINO_PROJECT_NAME and DOMINO_PROJECT_OWNER
+
+additionally you'll need to detect the host of the domino platform using: DOMINO_API_HOST
+
+Do not add mock/fake data if the API isn't work and instead prompt the user to set the needed env variables manually if we suspect the app is running locally and not from inside the domino platform yet.
+
+# Running the app
+The app should run via an app.sh script and be sure to bind to 0.0.0.0 and the web UI should be accessible via port 8888 by default.
