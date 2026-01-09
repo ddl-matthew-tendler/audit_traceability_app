@@ -8,9 +8,10 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="$SCRIPT_DIR/example_domino_frontend_code"
 TEMP_DIR=$(mktemp -d)
+REPO_URL="https://github.com/cerebrotech/frontend-web-ui-service.git"
 
-echo "📥 Downloading repository..."
-git clone "$(git -C "$SCRIPT_DIR" config --get remote.origin.url)" "$TEMP_DIR"
+echo "📥 Downloading repository from $REPO_URL..."
+git clone "$REPO_URL" "$TEMP_DIR"
 
 echo "🧹 Cleaning up git history..."
 rm -rf "$TEMP_DIR/.git"
