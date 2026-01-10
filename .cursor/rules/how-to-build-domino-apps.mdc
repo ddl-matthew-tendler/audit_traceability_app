@@ -35,6 +35,7 @@ re-aquire that access token on EVERY api call because it expires very quickly.
 if API_KEY_OVERRIDE env var is present than use that instead (because running outside domino), this can be used instead and is a long lasting API key we can use outside of domino for the same API requests and is used using the header name: X-Domino-Api-Key
 
 Domino API documentation can be found in a local project file: swagger.json
+Any APIs related to domino governance and bundles and policies is available in: governance_swagger.json
 
 Some API calls require knowing the project name and project owner name in order to form a URL, this can be automatically provided by the domino platform with these env variables: DOMINO_PROJECT_NAME and DOMINO_PROJECT_OWNER
 
