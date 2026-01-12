@@ -11,18 +11,18 @@ TEMP_DIR=$(mktemp -d)
 REPO_URL="https://github.com/cerebrotech/frontend-web-ui-service.git"
 
 echo "📥 Downloading repository from $REPO_URL..."
-git clone "$REPO_URL" "$TEMP_DIR"
+git clone --depth 1 "$REPO_URL" "$TEMP_DIR"
 
 echo "🧹 Cleaning up git history..."
 rm -rf "$TEMP_DIR/.git"
 
 echo "📦 Preparing target directory..."
-rm -rf "$TARGET_DIR"/*
-rm -rf "$TARGET_DIR"/.*
+mkdir -p "$TARGET_DIR"
+rm -rf "${TARGET_DIR:?}"/*
+rm -rf "${TARGET_DIR:?}"/.[!.]*
 
 echo "📂 Copying files to $TARGET_DIR..."
-cp -r "$TEMP_DIR"/* "$TARGET_DIR/" 2>/dev/null || true
-cp -r "$TEMP_DIR"/.[!.]* "$TARGET_DIR/" 2>/dev/null || true
+cp -r "$TEMP_DIR"/. "$TARGET_DIR/"
 
 echo "🧽 Cleaning up temporary directory..."
 rm -rf "$TEMP_DIR"
