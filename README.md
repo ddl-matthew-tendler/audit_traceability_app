@@ -58,14 +58,27 @@ The `usability_design_principles.mdc` rule is **not auto-applied** and must be m
 3. Navigate to `.cursor/rules/usability_design_principles.mdc`
 4. The rule will be included in that conversation's context
 
-**Example:**
+**Examples:**
+
+```
+@.cursor/rules/usability_design_principles.mdc
+
+Review this component for UX issues
+```
+
+```
+@.cursor/rules/usability_design_principles.mdc @src/components/SettingsForm.tsx
+
+Does this follow our design system? What should I fix?
+```
+
 ```
 @.cursor/rules/usability_design_principles.mdc
 
 Build a settings page with a form for user preferences
 ```
 
-This tells Cursor to follow Domino's design system (button hierarchy, typography, spacing, etc.) when generating UI code.
+This tells Cursor to follow Domino's design system (button hierarchy, typography, spacing, error handling, etc.) whether you're building new UI, reviewing existing code, or asking for improvements.
 
 ## API Reference
 
