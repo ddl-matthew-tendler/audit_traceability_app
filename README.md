@@ -18,6 +18,8 @@ This clones the repository (without git history) into `example_domino_frontend_c
 
 ### 2. Copy to Your Cursor Project
 
+#### Option A: Using Terminal
+
 Copy all necessary files to your project:
 
 ```bash
@@ -25,6 +27,15 @@ cp -r example_domino_frontend_code/* /path/to/your/cursor/project/ && \
 cp -r .cursor /path/to/your/cursor/project/ && \
 cp .gitignore domino-logo.svg swagger.json governance_swagger.json /path/to/your/cursor/project/
 ```
+
+#### Option B: Using macOS Finder
+
+1. Open this folder in Finder
+2. Press **`Cmd + Shift + .`** to show hidden files (the `.cursor` and `.gitignore` will appear)
+3. Select and copy all the files you need to your project folder
+4. Press **`Cmd + Shift + .`** again to hide hidden files when done
+
+> **Tip:** Hidden files appear slightly dimmed in Finder when visible.
 
 This gives your project:
 
