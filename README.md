@@ -1,51 +1,51 @@
 # Domino Apps Guidelines
 
-## Getting Started
+A starter kit for building Domino applications with Cursor, including frontend code examples, API documentation, and design system rules.
 
-### Downloading Frontend Code
+## Quick Start
 
-To populate the `example_domino_frontend_code` folder with the latest frontend code from the repository, run:
+### 1. Download Frontend Code
+
+Run the script to populate `example_domino_frontend_code/` with the latest frontend code:
 
 ```bash
 ./grab_front_end_code.sh
 ```
 
-This script will:
-- Clone the entire repository
-- Remove git history to ensure no git continuity in the example folder
-- Place all files into `example_domino_frontend_code/`
+This clones the repository (without git history) into `example_domino_frontend_code/`.
 
-**Note:** The `example_domino_frontend_code/` folder is gitignored, so downloaded files won't be tracked in version control.
+> **Note:** The `example_domino_frontend_code/` folder is gitignored and won't be tracked.
 
-### Using with Cursor
+### 2. Copy to Your Cursor Project
 
-To set up your Cursor project with all necessary files:
+Copy all necessary files to your project:
 
-```bash
-# Copy the frontend code (without hidden folders from within it)
-cp -r example_domino_frontend_code/* /path/to/your/cursor/project/
-
-# Copy only the root-level hidden folders and files from this project
-cp -r .cursor /path/to/your/cursor/project/
-cp .gitignore domino-logo.svg swagger.json /path/to/your/cursor/project/
-```
-
-Or in a single command:
 ```bash
 cp -r example_domino_frontend_code/* /path/to/your/cursor/project/ && \
-cp -r .cursor .gitignore domino-logo.svg swagger.json /path/to/your/cursor/project/
+cp -r .cursor /path/to/your/cursor/project/ && \
+cp .gitignore domino-logo.svg swagger.json governance_swagger.json /path/to/your/cursor/project/
 ```
 
-This ensures your Cursor project includes:
-- The `frontend/` folder with all application code
-- Configuration files (`Makefile`, `package.json`, `domino.yml`, etc.)
-- Build and deployment files (`build/`, `dev/`, `helm/`)
-- **Cursor rules** (`.cursor/`) for code analysis and completions
-- **Git ignore configuration** (`.gitignore`)
-- **Domino logo** for branding
-- **Swagger API documentation** for reference
+This gives your project:
+
+| Files | Description |
+|-------|-------------|
+| `frontend/` | Application code |
+| `Makefile`, `package.json`, `domino.yml` | Configuration files |
+| `build/`, `dev/`, `helm/` | Build and deployment files |
+| `.cursor/rules/` | Cursor rules for code analysis |
+| `swagger.json`, `governance_swagger.json` | API documentation |
+| `domino-logo.svg` | Branding assets |
+| `.gitignore` | Git ignore configuration |
 
 ## Documentation
 
-- [App Authoring Rules](app_authoring_rules.md)
-- [Swagger API Documentation](swagger.json)
+### Cursor Rules (`.cursor/rules/`)
+
+- **[how-to-build-domino-apps.mdc](.cursor/rules/how-to-build-domino-apps.mdc)** - Best practices, API guidelines, and technical constraints for building Domino apps
+- **[usability_design_principles.mdc](.cursor/rules/usability_design_principles.mdc)** - Design system guidelines, UX principles, and component patterns
+
+### API Reference
+
+- **[swagger.json](swagger.json)** - Main API documentation
+- **[governance_swagger.json](governance_swagger.json)** - Governance API documentation
