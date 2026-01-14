@@ -11,9 +11,61 @@ Avoid inline styles and javascript and use statically referenced files for that 
 # UI components and theme
 The theme should be light themed, and follow a look and feel similar to the Domino UI experience. Styles and components to replicate the theme can be found inside the example_domino_frontend_code folder.
 
-To make sure we're using the correct logo, use this one provided in the project directory called: domino-logo.svg
+
+## Header / Top Navigation Bar
+
+Reference: `example_domino_frontend_code/frontend/packages/base-components/src/TopNavBar/styles.ts`
+
+- **Height**: 44px
+- **Background color**: `#2E2E38` (neutralDark700)
+- **Text color**: `#FFFFFF` (white)
+- **Hover background**: `#40404F` (neutralDark600)
+
+## Color Palette
+
+Reference: `example_domino_frontend_code/frontend/packages/core/src/styled/colors.ts`
+
+### Primary Purple Scale
+- purple50: `#F0EEFC`
+- purple100: `#D1CBF6`
+- purple500: `#543FDE` (primary)
+- purple600: `#3B23D1` (primary hover)
+
+### Status Colors
+- Active/Success: `#28A464` (green700), background `#EFFBF5` (green50)
+- Complete/Info: `#0070CC` (blue700), background `#EBF6FF` (blue50)
+- Archived/Neutral: `#65657B` (neutralDark400), background `#F5F5F5` (neutralLight300)
+- Warning: `#CCB718` (yellow700), background `#FDFBEB` (yellow50)
+
+### Neutral Colors
+- Text primary: `#2E2E38` (neutralDark700)
+- Text secondary: `#65657B` (neutralDark400)
+- Text muted: `#8F8FA3` (neutralDark200)
+- Border light: `#E0E0E0` (neutralLight500)
+- Background light: `#FAFAFA` (neutralLight100)
+
+## Typography
+
+Reference: `example_domino_frontend_code/frontend/packages/core/src/styled/base-styles.json`
+
+```css
+font-family: 'Roboto', 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+line-height: 1.5715;
+```
+
+## Logo
+
+Use `domino-logo.svg` from project root. This contains the Domino wordmark with starburst icon.
+
+Reference implementation: `example_domino_frontend_code/frontend/packages/core/src/icons/DominoLabelIcon.tsx`
+
+Recommended header logo height: 32px
+
+## Top level nav
 
 Do not make fake top level nav items unless the app actually has real destinations for those nav items.
+
+## React components
 
 If possible, use (or copy) UI components for field elements, filters, etc from the included code in the subfolder: example_domino_frontend_code
 
@@ -21,7 +73,7 @@ But rather than using a full React application with JSX/TSX and a build step, it
 
 If a relevant component can't be found in example_domino_frontend_code feel free to use one from the Ant Design library: https://ant.design/components/overview
 
-# charts
+## charts
 Charts should use the highcharts js library if charts are ever needed. 
 
 # fast API routes and html / js urls
@@ -37,7 +89,9 @@ if API_KEY_OVERRIDE env var is present than use that instead (because running ou
 Domino API documentation can be found in a local project file: swagger.json
 Any APIs related to domino governance and bundles and policies is available in: governance_swagger.json
 
-Some API calls require knowing the project name and project owner name in order to form a URL, this can be automatically provided by the domino platform with these env variables: DOMINO_PROJECT_NAME and DOMINO_PROJECT_OWNER
+Some API calls require knowing the project name and project owner name in order to form a URL, this can be automatically provided by the domino platform with these env variables: DOMINO_PROJECT_NAME and DOMINO_PROJECT_OWNER 
+
+DOMINO_PROJECT_ID is also useful and provided by the platform when running from inside Domino.
 
 additionally you'll need to detect the host of the domino platform using: DOMINO_API_HOST
 
