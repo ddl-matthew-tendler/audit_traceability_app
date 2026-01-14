@@ -9,7 +9,7 @@ Apps should be architected as basic python back-end (using fast API) and javascr
 Avoid inline styles and javascript and use statically referenced files for that kind of thing.
 
 # UI components and theme
-The theme should be light themed, and follow a look and feel similar to the Domino UI experience. An example of this (steal the html and css and header and logo) can be scraped here: https://navigation-prototype-five.vercel.app/develop
+The theme should be light themed, and follow a look and feel similar to the Domino UI experience. Styles and components to replicate the theme can be found inside the example_domino_frontend_code folder.
 
 To make sure we're using the correct logo, use this one provided in the project directory called: domino-logo.svg
 
