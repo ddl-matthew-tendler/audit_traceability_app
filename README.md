@@ -67,12 +67,6 @@ Review this component for UX issues
 ```
 
 ```
-@.cursor/rules/usability_design_principles.mdc @src/components/SettingsForm.tsx
-
-Does this follow our design system? What should I fix?
-```
-
-```
 @.cursor/rules/usability_design_principles.mdc
 
 Build a settings page with a form for user preferences
