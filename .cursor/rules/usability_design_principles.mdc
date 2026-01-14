@@ -300,3 +300,426 @@ Ensures consistency of usage across different product contexts.
 | **Performance** | Use to describe metrics relating to deployment integrity (e.g. model quality, data drift). |
 | **System health** | Use to describe metrics relating to system-level behavior (e.g. CPU/GPU/memory consumption, latency, error rate). |
 | **Usage** | Use to describe metrics relating to consumer usage of a deployment (e.g. Apps views). |
+
+---
+
+# General Usability Best Practices
+
+## Fitts's Law
+
+Fitts's Law states that the time to acquire a target is a function of the distance to and size of the target. Larger, closer targets are faster to click/tap.
+
+### Key Principles:
+- **Make targets large enough to click easily** – All interactive elements need adequate size (not about importance, but usability)
+- **Reduce distance to frequent actions** – Place commonly used controls near the user's natural focus area
+- **Utilize screen edges** – Elements at screen edges are easier to target (cursor stops naturally)
+- **Group related actions together** – Reduces distance between sequential actions
+
+### Minimum Size Recommendations:
+- Touch targets: **minimum 44×44 pixels** for mobile/touch devices
+- Click targets: **minimum 24×24 pixels** for desktop mouse interactions
+- Provide adequate padding around small icons to increase the clickable area
+
+### Common Mistakes to Avoid:
+- Tiny touch targets on mobile (especially icon-only buttons)
+- Insufficient padding around clickable elements
+- Scattering related buttons across the screen
+- Placing primary actions far from where users are focused
+
+---
+
+## Button Hierarchy (Primary / Secondary / Tertiary)
+
+**Use button styling—not size—to indicate action importance.** This focuses user attention on the main action.
+
+### Button Types:
+
+| Type | Styling | Use For |
+|------|---------|---------|
+| **Primary** | Solid fill (brand color, e.g., blue) | The ONE main action per view (Save, Submit, Create) |
+| **Secondary** | Outlined/bordered, no fill | Supporting actions (Cancel, Back, Edit) |
+| **Tertiary** | Text only, no border/fill | Low-emphasis actions (Learn more, Skip, Reset) |
+| **Destructive** | Red/danger color | Delete, Remove, irreversible actions |
+
+### Guidelines:
+- **One primary button per view** – If everything is primary, nothing stands out
+- **Primary buttons are visually prominent** – Solid fill with high contrast
+- **Secondary buttons are visually subdued** – Outlined or ghost style
+- **Tertiary buttons look like links** – Minimal styling, often just text
+- **Consistent placement** – Primary action in the same position across similar views
+- **Size is about usability, not importance** – All buttons should be easy to tap; styling shows importance
+
+### Common Patterns:
+
+| Context | Primary | Secondary |
+|---------|---------|-----------|
+| Form submission | "Save" / "Submit" | "Cancel" |
+| Modal dialog | "Confirm" / "Delete" | "Cancel" |
+| Wizard/stepper | "Next" / "Continue" | "Back" |
+| Creation flow | "Create [entity]" | "Cancel" |
+
+### Button Placement:
+- **Modals**: Primary on the right, Secondary (Cancel) on the left
+- **Forms**: Primary at the end of the form, aligned with form fields
+- **Page headers**: Primary actions in top-right area
+- **Mobile**: Consider bottom-anchored primary buttons for thumb accessibility
+
+---
+
+## Visual Hierarchy & Layout
+
+### Reading Patterns
+
+**F-Pattern** (for text-heavy pages like articles, dashboards):
+- Users scan the top horizontal line first
+- Then move down the left side, occasionally reading across
+- **Place key information** (headlines, navigation) along the top and left side
+
+**Z-Pattern** (for minimal text, visual pages like landing pages):
+- Eyes move: top-left → top-right → diagonal to bottom-left → bottom-right
+- **Position key elements at Z-path points:**
+  - Top-left: Logo/branding
+  - Top-right: Navigation/secondary actions
+  - Center: Main content
+  - Bottom-right: Primary call to action
+
+### Establishing Hierarchy
+
+1. **Size** – Larger elements draw attention first
+2. **Color & Contrast** – High contrast elements stand out
+3. **Position** – Top-left is scanned first in LTR languages
+4. **Whitespace** – Isolated elements with more whitespace appear more important
+5. **Typography weight** – Bold text draws more attention than regular weight
+
+---
+
+## Typography & Font Hierarchy
+
+A clear typographic hierarchy helps users scan content, understand structure, and find information quickly. Use consistent type styles across the product.
+
+### Type Scale
+
+Use a **modular scale** (ratio-based sizing) for consistent, harmonious typography. Common scales:
+- **1.25 (Major Third)** – Subtle, good for dense UIs
+- **1.333 (Perfect Fourth)** – Balanced, common for applications
+- **1.5 (Perfect Fifth)** – More dramatic, good for marketing pages
+
+**Example scale (base 16px, ratio 1.25):**
+| Level | Size | Use |
+|-------|------|-----|
+| H1 | 32px (2rem) | Page titles |
+| H2 | 26px (1.6rem) | Section headers |
+| H3 | 20px (1.25rem) | Subsection headers |
+| H4 | 16px (1rem) | Card titles, labels |
+| Body | 14-16px | Primary content |
+| Caption | 12px (0.75rem) | Helper text, metadata |
+| Small | 11px (0.69rem) | Fine print, timestamps |
+
+### Heading Hierarchy Rules
+
+1. **Don't skip levels** – Go H1 → H2 → H3, not H1 → H3 (important for accessibility)
+2. **One H1 per page** – The page title; everything else is H2 or below
+3. **Headings describe content** – Scannable headings help users find what they need
+4. **Consistent styling** – Same heading level = same visual treatment everywhere
+
+### Weight & Style
+
+| Weight | Use For |
+|--------|---------|
+| **Bold (600-700)** | Headings, labels, emphasis, important numbers |
+| **Medium (500)** | Subheadings, navigation items, button text |
+| **Regular (400)** | Body text, descriptions, form inputs |
+| **Light (300)** | Large display text only (not for small sizes) |
+
+### Contrast Through Typography
+
+Create hierarchy without changing size by using:
+- **Weight contrast** – Bold label + regular value
+- **Color contrast** – Primary color for key info, muted gray for secondary
+- **Case** – ALL CAPS for small labels (sparingly), sentence case for content
+- **Style** – Italic for emphasis or metadata (use sparingly)
+
+### Line Height (Leading)
+
+| Text Type | Line Height |
+|-----------|-------------|
+| Headings | 1.1 – 1.3 (tighter) |
+| Body text | 1.4 – 1.6 (comfortable reading) |
+| Captions | 1.3 – 1.4 |
+
+### Common Typography Mistakes
+
+- ❌ Too many font sizes (stick to your type scale)
+- ❌ Body text too small (minimum 14px for UI, 16px preferred)
+- ❌ Insufficient contrast between heading levels
+- ❌ Using light weight fonts at small sizes (illegible)
+- ❌ Line lengths too long (aim for 50-75 characters per line)
+- ❌ Centered body text (hard to read; left-align instead)
+
+### Typography for Data
+
+| Element | Recommendation |
+|---------|----------------|
+| **Numbers in tables** | Use tabular/monospace figures for alignment |
+| **Large numbers** | Add thousand separators (1,234,567) |
+| **Units** | Smaller or lighter weight than the number |
+| **Trends (+/-)** | Use color + icon, not just symbols |
+| **Empty/null values** | Use "—" or "N/A", not "0" or blank |
+
+---
+
+## Whitespace & Grouping
+
+### Law of Proximity (Gestalt Principle)
+**Elements that are close together are perceived as related.** Use whitespace strategically to create visual groups.
+
+### Guidelines:
+- **Group related controls together** – Form fields that belong together should be visually clustered
+- **Separate unrelated sections** – Use more whitespace between distinct sections than within sections
+- **Consistent spacing scale** – Use a spacing system (e.g., 4px, 8px, 16px, 24px, 32px) for predictable rhythm
+- **Card patterns** – Use cards to group related content and create clear boundaries
+- **Section dividers** – Use subtle lines or background colors to separate major sections
+
+### The 1:2 Ratio Rule:
+- Space **within** a group should be approximately **half** the space **between** groups
+- This creates clear visual separation without explicit borders
+
+---
+
+## Alignment
+
+### Principles:
+- **Align elements to a grid** – Creates visual order and professionalism
+- **Left-align text** in LTR languages for readability (avoid centered body text)
+- **Align form labels consistently** – Either all left-aligned or all right-aligned
+- **Align related data in tables** – Numbers should be right-aligned, text left-aligned
+- **Align action buttons** – Consistent button placement across similar views (e.g., always bottom-right for modals)
+
+### Common Alignment Patterns:
+- **Form labels**: Left-aligned labels above fields, or right-aligned labels beside fields
+- **Modal actions**: Primary action on the right, secondary (Cancel) on the left
+- **Page actions**: Primary actions in top-right or prominent position
+
+---
+
+## Calls to Action (CTAs)
+
+> See also: [Button Hierarchy (Primary / Secondary / Tertiary)](#button-hierarchy-primary--secondary--tertiary) for button styling guidelines.
+
+### Button Labeling
+
+Use clear, action-oriented labels that describe what will happen:
+
+| Bad | Good | Why |
+|-----|------|-----|
+| "OK" | "Save changes" | Specific about what happens |
+| "Submit" | "Create project" | Names the action and object |
+| "Click here" | "View documentation" | Descriptive, accessible |
+| "Delete" | "Delete project" | Includes the object being deleted |
+| "Yes" / "No" | "Delete" / "Keep" | Action-oriented, not just confirmation |
+
+### Labeling Guidelines:
+- **Start with a verb** – "Save", "Delete", "Export", "Create"
+- **Be specific** – Include the object when helpful ("Delete project" not just "Delete")
+- **Match the trigger** – If user clicked "Edit profile", the save button should say "Save profile"
+- **Avoid jargon** – "Submit" is vague; prefer specific actions
+
+### Disable vs. Hide
+
+| Approach | When to Use |
+|----------|-------------|
+| **Disable** (grayed out) | Action exists but isn't available yet (e.g., "Save" when form is incomplete) |
+| **Hide** | User will never need this action (e.g., admin-only actions for regular users) |
+| **Show with explanation** | Action unavailable with a reason (tooltip or helper text explaining why) |
+
+- Disabled buttons should have a tooltip explaining why they're disabled
+- Don't hide actions and then show them unexpectedly—users should understand what's possible
+
+---
+
+## Content Positioning
+
+### Where to Put Important Content:
+
+| Position | Best For | Why |
+|----------|----------|-----|
+| **Top-left** | Logo, navigation, page title | First scanned area (F-pattern) |
+| **Top-right** | User menu, notifications, global actions | Expected location for account/settings |
+| **Above the fold** | Key messages, primary CTA | Visible without scrolling |
+| **Left sidebar** | Navigation, filters | Persistent access while viewing content |
+| **Right sidebar** | Contextual info, help, related items | Secondary information area |
+| **Bottom of forms** | Submit/Cancel buttons | Natural flow after completing fields |
+
+### Mobile Considerations:
+- **Thumb zone** – Place primary actions within easy thumb reach (bottom of screen)
+- **Bottom navigation** – Most important nav items should be easily tappable
+- **Avoid top corners** – Difficult to reach with one hand on large phones
+
+---
+
+## Error Handling
+
+### Error Message Principles:
+
+1. **Be human-readable** – Write errors in plain language, not technical jargon
+2. **Explain what happened** – "Your session expired" not "Error 401"
+3. **Tell users what to do next** – "Sign in again to continue"
+4. **Be specific** – "Password must be at least 8 characters" not "Invalid password"
+5. **Don't blame the user** – "We couldn't find that page" not "You entered a wrong URL"
+
+### Error Placement:
+
+| Error Type | Placement | When to Use |
+|------------|-----------|-------------|
+| **Inline validation** | Next to the field | Form field errors (preferred) |
+| **Inline banner** | Top of form/section | Multiple related errors, form submission failures |
+| **Toast notification** | Corner of screen | Async errors, background failures, non-blocking issues |
+| **Modal dialog** | Center of screen | Critical errors requiring immediate attention |
+| **Full page** | Replace content | 404, 500, permission denied, maintenance |
+
+### Inline Errors (Preferred):
+- Show errors **immediately adjacent** to the problematic field
+- Use **red color and error icon** for visibility
+- Keep error text **concise but helpful**
+- **Don't clear the user's input** – let them correct it
+
+### Toast Notifications:
+- Use for **async operations** (API failures, background sync issues)
+- **Auto-dismiss** after 5-8 seconds for non-critical messages
+- Provide a **dismiss button** for immediate closure
+- Include **action buttons** when relevant ("Retry", "View details")
+- **Stack multiple toasts** – don't overlap or replace
+
+### Error Message Examples:
+
+| Bad | Good |
+|-----|------|
+| "Error" | "Unable to save changes" |
+| "Invalid input" | "Email address must include @" |
+| "Request failed" | "Couldn't connect to server. Check your internet connection." |
+| "Unauthorized" | "You don't have permission to view this. Contact your admin for access." |
+
+---
+
+## Data Visualization & Charts
+
+### General Chart Principles:
+
+1. **Choose the right chart type** for the data:
+   - **Line charts**: Trends over time
+   - **Bar charts**: Comparing categories
+   - **Pie charts**: Parts of a whole (use sparingly, max 5-6 slices)
+   - **Tables**: Precise values, comparisons across many dimensions
+
+2. **Label clearly** – Title, axis labels, units, and legends should be unambiguous
+
+3. **Don't distort data** – Start y-axis at zero for bar charts; be transparent about truncated axes
+
+4. **Reduce chartjunk** – Remove unnecessary gridlines, 3D effects, and decorations
+
+### Time Series Specific Rules:
+
+- **Scale the time axis to the selected range** – If user selects "Last 7 days", show 7 days, not the full data range
+- **Use consistent time intervals** – Don't stretch/compress irregular intervals
+- **Handle missing data transparently** – Show gaps or clearly indicate interpolation
+- **Use relative dates for recent data** – "2 hours ago" is more useful than "Jan 14, 2026 5:32 PM"
+
+### Axis Scaling:
+
+- **Y-axis should start at zero** for bar charts to avoid exaggerating differences
+- **Line charts may truncate** y-axis if zero isn't meaningful, but clearly indicate this
+- **Avoid dual y-axes** unless absolutely necessary – they're often misleading
+- **Round to appropriate precision** – Don't show "45.2367%" when "45%" suffices
+
+### Interactive Charts:
+
+- **Provide hover/click details** – Tooltips with exact values
+- **Allow zooming and panning** for dense time series
+- **Show loading states** – Don't display empty charts while data loads
+- **Handle empty states** – Show helpful message when no data is available
+
+### Chart Color Guidelines:
+
+- Use **colorblind-safe palettes** – Avoid red/green only distinctions
+- **Limit colors** – Max 5-7 distinct colors per chart
+- Use **sequential colors** for ordered data (light to dark)
+- Use **categorical colors** for unrelated categories
+- **Highlight important data** – Use a distinct color for key metrics
+
+---
+
+## Form Design Best Practices
+
+### Layout:
+- **One column layouts** are easier to scan than multi-column
+- **Group related fields** together with clear section labels
+- **Logical order** – Follow natural sequence (name, email, phone, address)
+- **Show only necessary fields** – Every additional field reduces completion rates
+
+### Labels & Instructions:
+- **Labels above fields** (not placeholder text as labels)
+- **Keep labels short** – "Email" not "Please enter your email address"
+- **Use helper text** for complex requirements (shown below the field)
+- **Mark required fields** clearly – Use asterisk (*) or "(required)"
+
+### Validation:
+- **Validate on blur** – Check fields when user moves away, not on every keystroke
+- **Show success states** – Green checkmark for valid fields
+- **Preserve user input** on errors – Don't clear the form
+- **Scroll to first error** on form submission
+
+### Smart Defaults:
+- **Pre-fill when possible** – Use known information (user's name, timezone)
+- **Select sensible defaults** – Most common option should be pre-selected
+- **Remember recent choices** – Especially for repeat workflows
+
+### Checkbox & Toggle Semantics
+
+**Checking a checkbox should ENABLE or ADD something, not disable it.** Negative framing increases cognitive load.
+
+#### The Rule:
+- ✅ **Checked = ON / Enabled / Active / Included**
+- ❌ **Checked = OFF / Disabled / Excluded** (avoid this!)
+
+#### Examples:
+
+| ❌ Bad (Negative Framing) | ✅ Good (Positive Framing) |
+|---------------------------|----------------------------|
+| ☑️ "Disable notifications" | ☑️ "Enable notifications" |
+| ☑️ "Hide advanced options" | ☑️ "Show advanced options" |
+| ☑️ "Don't send me emails" | ☑️ "Send me email updates" |
+| ☑️ "Exclude from search" | ☑️ "Include in search" |
+| ☑️ "Opt out of tracking" | ☑️ "Allow usage analytics" |
+
+#### Why This Matters:
+- Users expect **checked = active/on** (mental model from light switches, etc.)
+- Double negatives are confusing: "Uncheck to not disable" = ???
+- Scanning a list of checkboxes should quickly show what's enabled
+
+#### Checkbox vs. Toggle:
+| Control | Best For |
+|---------|----------|
+| **Checkbox** | Multiple selections, opt-ins, settings that apply on form submit |
+| **Toggle switch** | Binary on/off that takes effect immediately, single settings |
+
+#### Toggle Labels:
+- Put the label **before** the toggle, describing what it controls
+- The toggle itself shows the state (on/off) — don't duplicate in the label
+- **Good:** "Email notifications" [toggle]
+- **Bad:** "Enable email notifications" [toggle] (redundant with on/off state)
+
+---
+
+## Interaction Feedback
+
+### Users Need Feedback For:
+- **Hover states** – Visual change when mouse is over interactive elements
+- **Click/tap acknowledgment** – Button press animation, color change
+- **Loading states** – Spinner, skeleton, progress bar for async operations
+- **Success confirmation** – Visual confirmation that action completed
+- **State changes** – Clear indication when something toggles on/off
+
+### Loading States:
+- **Disable interactive elements** while loading to prevent double-submission
+- **Show progress** for file uploads and long operations
+- **Provide cancel option** for long-running operations
