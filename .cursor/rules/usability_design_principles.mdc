@@ -1,7 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Domino Design System Guidelines
 
 > Source: [Domino Design System Guidelines Wiki](https://dominodatalab.atlassian.net/wiki/spaces/PDT/pages/2997682182/Design+system+guidelines)
