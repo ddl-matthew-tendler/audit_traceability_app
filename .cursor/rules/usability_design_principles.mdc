@@ -108,7 +108,6 @@ Use these questions as a checklist when designing and reviewing UI:
 - [ ] Are there designs and copy for empty states?
 - [ ] Is the layout checked on wide and mid screen sizes (laptop vs wide monitors)?
 - [ ] Is the copy checked for grammar, spelling, punctuation, and capitalization on Domino terms (Workspace and Model API are capitalized, Artifacts is plural and capitalized)?
-- [ ] Is the design using the DDS library?
 - [ ] Are colors, fonts, interactions, and images accessible?
 - [ ] Are the terms and language used understandable to a non-data scientist?
 - [ ] Does the solution consider how users can achieve their goals proactively and reactively?
@@ -139,80 +138,7 @@ Use these questions as a checklist when designing and reviewing UI:
 
 ## Components
 
-### Actions
-- Button
-- Icon button
-- Multi-action button
-- Link
-- Menu
-
-### Inputs
-- Checkbox
-- Radio
-- Toggle
-- Input fields
-- Select fields
-- File upload
-
-### Feedback
-- Badge
-- Tooltip
-- Toast
-- Tag
-- Metadata bar
-- Metric card
-
-### Content Containers
-- Table
-- Highlight
-- Card
-- Accordion
-- Popover
-- Modal
-- Wizard
-- Drawer
-
-### Navigation
-- Tabs
-- Segmented control
-- Anchor links
-- Tree
-- Breadcrumbs
-
----
-
-## Patterns
-
-### Search & Discovery
-- Navigation
-
-### Layout
-- Page header
-
-### Content Display
-- Callout
-- Interactive text
-- Entity editing
-- Forms
-- File Viewer
-
-### Actions & Inputs
-- Entity access and sharing
-- Email multi-select field
-- Content editing
-- Confirmation
-
-### Feedback
-- Empty state
-- Helper text
-
----
-
-## Templates
-- List
-- Detail page template
-
----
+Whenever possible use components and patterns defined in the Domino Storybook here: https://main--60c0de3f60dd96003bdcb1a1.chromatic.com/?path=/docs/getting-started-introduction--docs
 
 # Quick Reference
 
@@ -304,7 +230,7 @@ Ensures consistency of usage across different product contexts.
 
 # General Usability Best Practices
 
-## Fitts's Law
+## Fitts's Law (JESS TO TWEAK AND REF AA GUIDELINES)
 
 Fitts's Law states that the time to acquire a target is a function of the distance to and size of the target. Larger, closer targets are faster to click/tap.
 
@@ -327,41 +253,10 @@ Fitts's Law states that the time to acquire a target is a function of the distan
 
 ---
 
-## Button Hierarchy (Primary / Secondary / Tertiary)
+## UI Screens when possible should have a clear call to action 
 
-**Use button styling—not size—to indicate action importance.** This focuses user attention on the main action.
+This is achieved by using Primary vs Secondary button components, see our button components and guidelines in the storybook here: https://main--60c0de3f60dd96003bdcb1a1.chromatic.com/?path=/docs/components-actions-button--docs
 
-### Button Types:
-
-| Type | Styling | Use For |
-|------|---------|---------|
-| **Primary** | Solid fill (brand color, e.g., blue) | The ONE main action per view (Save, Submit, Create) |
-| **Secondary** | Outlined/bordered, no fill | Supporting actions (Cancel, Back, Edit) |
-| **Tertiary** | Text only, no border/fill | Low-emphasis actions (Learn more, Skip, Reset) |
-| **Destructive** | Red/danger color | Delete, Remove, irreversible actions |
-
-### Guidelines:
-- **One primary button per view** – If everything is primary, nothing stands out
-- **Primary buttons are visually prominent** – Solid fill with high contrast
-- **Secondary buttons are visually subdued** – Outlined or ghost style
-- **Tertiary buttons look like links** – Minimal styling, often just text
-- **Consistent placement** – Primary action in the same position across similar views
-- **Size is about usability, not importance** – All buttons should be easy to tap; styling shows importance
-
-### Common Patterns:
-
-| Context | Primary | Secondary |
-|---------|---------|-----------|
-| Form submission | "Save" / "Submit" | "Cancel" |
-| Modal dialog | "Confirm" / "Delete" | "Cancel" |
-| Wizard/stepper | "Next" / "Continue" | "Back" |
-| Creation flow | "Create [entity]" | "Cancel" |
-
-### Button Placement:
-- **Modals**: Primary on the right, Secondary (Cancel) on the left
-- **Forms**: Primary at the end of the form, aligned with form fields
-- **Page headers**: Primary actions in top-right area
-- **Mobile**: Consider bottom-anchored primary buttons for thumb accessibility
 
 ---
 
@@ -722,3 +617,5 @@ Use clear, action-oriented labels that describe what will happen:
 - **Disable interactive elements** while loading to prevent double-submission
 - **Show progress** for file uploads and long operations
 - **Provide cancel option** for long-running operations
+
+# Tracking usability findings using this mixpanel event endpoint: TBD
