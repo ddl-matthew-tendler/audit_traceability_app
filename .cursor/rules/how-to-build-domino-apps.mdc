@@ -80,22 +80,47 @@ Charts should use the highcharts js library if charts are ever needed.
 Because when running an app inside domino its behind an nginx proxy that modifies the root url, the app can't rely on absolute url paths to make calls to its backend. Consider using relative or dynamic URLs or detect the path so these calls work.
 
 # Domino API calls
+
+## Authentication
+
 Domino API requests are authenticated using a bearer token that when running within the platform can be retrieved using response = requests.get("http://localhost:8899/access-token") and is used to make API calls using a header:  headers = {"Authorization": token} and if the token starts with Bearer we need to include that.
 
-re-aquire that access token on EVERY api call because it expires very quickly. 
+Re-acquire that access token on EVERY api call because it expires very quickly. 
 
-if API_KEY_OVERRIDE env var is present than use that instead (because running outside domino), this can be used instead and is a long lasting API key we can use outside of domino for the same API requests and is used using the header name: X-Domino-Api-Key
+If API_KEY_OVERRIDE env var is present than use that instead (because running outside domino), this can be used instead and is a long lasting API key we can use outside of domino for the same API requests and is used using the header name: X-Domino-Api-Key
 
-Domino API documentation can be found in a local project file: swagger.json
-Any APIs related to domino governance and bundles and policies is available in: governance_swagger.json
+## API Documentation & Base Paths
 
-Some API calls require knowing the project name and project owner name in order to form a URL, this can be automatically provided by the domino platform with these env variables: DOMINO_PROJECT_NAME and DOMINO_PROJECT_OWNER 
+There are TWO separate swagger files with DIFFERENT base paths:
 
-DOMINO_PROJECT_ID is also useful and provided by the platform when running from inside Domino.
+1. **Platform APIs** (`swagger.json`):
+   - Base path: `/v4/`
+   - Example: `{DOMINO_API_HOST}/v4/jobs?projectId=...`
+   - Includes: Jobs, Projects, Users, Workspaces, etc.
 
-additionally you'll need to detect the host of the domino platform using: DOMINO_API_HOST
+2. **Governance APIs** (`governance_swagger.json`):
+   - Base path: `/api/governance/v1/`
+   - Example: `{DOMINO_API_HOST}/api/governance/v1/bundles?project_id=...`
+   - Includes: Bundles, Policies, Attachments, etc.
 
-Do not add mock/fake data if the API isn't work and instead prompt the user to set the needed env variables manually if we suspect the app is running locally and not from inside the domino platform yet.
+**IMPORTANT**: Do NOT add an `/api/` prefix to the v4 platform endpoints. The swagger.json `servers` section shows `/v4` and that is the correct base path to use directly.
+
+## Swagger Caveats
+
+The swagger files may not be 100% accurate:
+- Not all documented query parameters actually work (e.g., `sort_by` and `order_by` on the jobs endpoint do not work)
+- Test API calls manually before assuming swagger parameters are correct
+- If an API returns HTML instead of JSON, it usually means authentication failed - check your headers
+
+## Environment Variables
+
+These environment variables are provided by the Domino platform when running inside Domino:
+- `DOMINO_API_HOST` - The base URL for Domino API calls
+- `DOMINO_PROJECT_ID` - The current project's ID
+- `DOMINO_PROJECT_NAME` - The current project's name
+- `DOMINO_PROJECT_OWNER` - The project owner's username
+
+Do not add mock/fake data if the API isn't working and instead prompt the user to set the needed env variables manually if we suspect the app is running locally and not from inside the domino platform yet.
 
 # Running the app
 The app should run via an app.sh script and be sure to bind to 0.0.0.0 and the web UI should be accessible via port 8888 by default.
