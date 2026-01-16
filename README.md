@@ -37,17 +37,6 @@ cp .gitignore domino-logo.svg swagger.json governance_swagger.json /path/to/your
 
 > **Tip:** Hidden files appear slightly dimmed in Finder when visible.
 
-This gives your project:
-
-| Files | Description |
-|-------|-------------|
-| `frontend/` | Application code |
-| `Makefile`, `package.json`, `domino.yml` | Configuration files |
-| `build/`, `dev/`, `helm/` | Build and deployment files |
-| `.cursor/rules/` | Cursor rules for code analysis |
-| `swagger.json`, `governance_swagger.json` | API documentation |
-| `domino-logo.svg` | Branding assets |
-| `.gitignore` | Git ignore configuration |
 
 ## Cursor Rules Setup
 

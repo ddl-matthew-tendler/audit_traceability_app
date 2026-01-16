@@ -3,95 +3,228 @@ name: how-to-build-domino-apps
 description: This is a rule that describes how to build domino apps, best practices, api guidelines and technical constraints, UI, components, etc.
 ---
 
-# basic stack
-Apps should be architected as basic python back-end (using fast API) and javascript / html / css front-end. 
+# Basic Stack
 
-Avoid inline styles and javascript and use statically referenced files for that kind of thing.
+Apps should be architected as basic Python back-end (using FastAPI) and JavaScript/HTML/CSS front-end.
 
-# UI components and theme
-The theme should be light themed, and follow a look and feel similar to the Domino UI experience. Styles and components to replicate the theme can be found inside the example_domino_frontend_code folder.
+Avoid inline styles and JavaScript - use statically referenced files for CSS and JS.
 
+As much as possible have all errors output to stdout for easy debugging
 
-## Header / Top Navigation Bar
+# UI Components and Theme
 
-Reference: `example_domino_frontend_code/frontend/packages/base-components/src/TopNavBar/styles.ts`
+The UI should use **Ant Design** components (version 5.x) styled to match the Domino Design System. Load Ant Design via CDN for a lightweight, no-build approach.
 
-- **Height**: 44px
-- **Background color**: `#2E2E38` (neutralDark700)
-- **Text color**: `#FFFFFF` (white)
-- **Hover background**: `#40404F` (neutralDark600)
+## Storybook - The Definitive UI Reference
 
-## Color Palette
+The **Domino Storybook** is the authoritative reference for all UI components, colors, typography, spacing, and patterns. Run it locally to see live examples and documentation.
 
-Reference: `example_domino_frontend_code/frontend/packages/core/src/styled/colors.ts`
+### Running Storybook
 
-### Primary Purple Scale
-- purple50: `#F0EEFC`
-- purple100: `#D1CBF6`
-- purple500: `#543FDE` (primary)
-- purple600: `#3B23D1` (primary hover)
+After running `./grab_front_end_code.sh` to get the frontend code:
 
-### Status Colors
-- Active/Success: `#28A464` (green700), background `#EFFBF5` (green50)
-- Complete/Info: `#0070CC` (blue700), background `#EBF6FF` (blue50)
-- Archived/Neutral: `#65657B` (neutralDark400), background `#F5F5F5` (neutralLight300)
-- Warning: `#CCB718` (yellow700), background `#FDFBEB` (yellow50)
+```bash
+cd example_domino_frontend_code/frontend
 
-### Neutral Colors
-- Text primary: `#2E2E38` (neutralDark700)
-- Text secondary: `#65657B` (neutralDark400)
-- Text muted: `#8F8FA3` (neutralDark200)
-- Border light: `#E0E0E0` (neutralLight500)
-- Background light: `#FAFAFA` (neutralLight100)
+# Install dependencies (first time only)
+yarn install
 
-## Typography
+# Build required packages
+yarn build-install-mocks
+yarn build-install-core  
+yarn build-install-base-components
 
-Reference: `example_domino_frontend_code/frontend/packages/core/src/styled/base-styles.json`
-
-```css
-font-family: 'Roboto', 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-line-height: 1.5715;
+# Start Storybook
+cd packages/ui
+yarn storybook
 ```
 
-## Logo
+Storybook runs at **http://localhost:6007**
 
-Use `domino-logo.svg` from project root. This contains the Domino wordmark with starburst icon.
+### Key Storybook Sections
 
-Reference implementation: `example_domino_frontend_code/frontend/packages/core/src/icons/DominoLabelIcon.tsx`
+Reference these URLs in the running Storybook for detailed documentation:
 
-Recommended header logo height: 32px
+| Topic | Storybook URL Path |
+|-------|-------------------|
+| **Introduction & Overview** | `?path=/story/getting-started-introduction--docs` |
+| **Colors - Reference Tokens** | `?path=/story/foundations-colors-reference-color-tokens--default` |
+| **Colors - System Tokens** | `?path=/story/foundations-colors-system-color-tokens--default` |
+| **Typography** | `?path=/story/foundations-typography--default` |
+| **Spacing - Reference** | `?path=/story/foundations-spacing-reference-tokens--default` |
+| **Spacing - System** | `?path=/story/foundations-spacing-system-tokens--default` |
+| **Icons** | `?path=/story/foundations-icons--default` |
+| **Button** | `?path=/story/components-actions-button--docs` |
+| **Card** | `?path=/story/components-content-containers-card--default` |
+| **Modal** | `?path=/story/components-content-containers-modal--default` |
+| **DominoTable** | `?path=/story/components-content-containers-dominotable-documentation--page` |
+| **Text Field** | `?path=/story/components-inputs-fields-text-field--default` |
+| **Select** | `?path=/story/components-inputs-fields-single-select--default` |
+| **Callout/Alert** | `?path=/story/components-feedback-callout--default` |
+| **Tag** | `?path=/story/components-feedback-tag--default` |
+| **TopNavBar** | `?path=/story/patterns-search-discovery-topnavbar--default` |
 
-## Top level nav
+## CDN Setup
 
-Do not make fake top level nav items unless the app actually has real destinations for those nav items.
+Include these in your HTML `<head>`:
 
-## React components
+```html
+<!-- React (required for Ant Design) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-If possible, use (or copy) UI components for field elements, filters, etc from the included code in the subfolder: example_domino_frontend_code
+<!-- Ant Design -->
+<script src="https://unpkg.com/antd@5.11.2/dist/antd.min.js"></script>
+<link href="https://unpkg.com/antd@5.11.2/dist/reset.css" rel="stylesheet">
 
-But rather than using a full React application with JSX/TSX and a build step, it should use React with React.createElement() calls directly in vanilla JavaScript and be as lightweight as possible, only use components as we need them. Definitely re-use any styling you can find as part of that example_domino_frontend_code (but don't rely on referencing tha for the real app, it's a reference and will eventually get deleted before deploying the app).
+<!-- Day.js (required for DatePicker) -->
+<script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
 
-If a relevant component can't be found in example_domino_frontend_code feel free to use one from the Ant Design library: https://ant.design/components/overview
+<!-- Inter Font (Domino's primary font) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-## charts
-Charts should use the highcharts js library if charts are ever needed. 
+<!-- Highcharts (for charts) -->
+<script src="https://code.highcharts.com/highcharts.js"></script>
+```
 
-# fast API routes and html / js urls
-Because when running an app inside domino its behind an nginx proxy that modifies the root url, the app can't rely on absolute url paths to make calls to its backend. Consider using relative or dynamic URLs or detect the path so these calls work.
+## Using React Components Without JSX
 
-# Domino API calls
+Use `React.createElement()` to create components without a build step:
+
+```javascript
+const { ConfigProvider, Button, Table, Modal, Select, Input, Form, Space, Card, Tag, Alert } = antd;
+const { createElement: h, useState, useEffect } = React;
+
+// Example: Create a button
+h(Button, { type: 'primary', onClick: handleClick }, 'Click Me');
+
+// Example: Create a form
+h(Form, { layout: 'vertical', onFinish: handleSubmit },
+  h(Form.Item, { label: 'Name', name: 'name', rules: [{ required: true }] },
+    h(Input, { placeholder: 'Enter name' })
+  ),
+  h(Form.Item, null,
+    h(Button, { type: 'primary', htmlType: 'submit' }, 'Submit')
+  )
+);
+```
+
+## Domino Theme Configuration
+
+Wrap your entire app in `ConfigProvider` with Domino theming. This applies Domino's colors and styles to all Ant Design components.
+
+**Note:** Color values below are derived from Storybook's Foundations/Colors section. Look up additional colors there as needed (Reference Tokens for raw hex values, System Tokens for semantic usage).
+
+```javascript
+const dominoTheme = {
+  token: {
+    // Primary Purple
+    colorPrimary: '#543FDE',
+    colorPrimaryHover: '#3B23D1',
+    colorPrimaryActive: '#311EAE',
+    
+    // Text
+    colorText: '#2E2E38',
+    colorTextSecondary: '#65657B',
+    colorTextTertiary: '#8F8FA3',
+    
+    // Status Colors
+    colorSuccess: '#28A464',
+    colorWarning: '#CCB718',
+    colorError: '#C20A29',
+    colorInfo: '#0070CC',
+    
+    // Backgrounds & Borders
+    colorBgContainer: '#FFFFFF',
+    colorBgLayout: '#FAFAFA',
+    colorBorder: '#E0E0E0',
+    
+    // Typography
+    fontFamily: 'Inter, Lato, Helvetica Neue, Helvetica, Arial, sans-serif',
+    fontSize: 14,
+    
+    // Border Radius (Domino uses subtle rounding)
+    borderRadius: 4,
+    borderRadiusLG: 8,
+  },
+  components: {
+    Button: { primaryShadow: 'none', defaultShadow: 'none' },
+    Table: { headerBg: '#FAFAFA', rowHoverBg: '#F5F5F5' },
+  },
+};
+
+// Wrap your app
+function App() {
+  return h(ConfigProvider, { theme: dominoTheme },
+    h('div', { className: 'app-container' },
+      // Your app content
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(h(App));
+```
+
+# Header / Top Navigation Bar
+
+See Storybook's **TopNavBar** pattern (`?path=/story/patterns-search-discovery-topnavbar--default`) for full implementation and styling.
+
+Key specs:
+- **Height**: 44px
+- **Background**: `#2E2E38` (neutralDark700)
+- **Text**: `#FFFFFF`
+
+Use `domino-logo.svg` from project root (height: 32px).
+
+**Guidelines:**
+- Only add nav items with real destinations
+- Primary actions on the right side
+- Use breadcrumbs for hierarchy
+
+# Charts
+
+Use Highcharts with Domino's accent colors (see Storybook's System Color Tokens for the full accent palette):
+
+```javascript
+Highcharts.setOptions({
+  colors: ['#543FDE', '#0070CC', '#28A464', '#CCB718', '#FF6543', '#E835A7', '#2EDCC4', '#A9734C'],
+  chart: { style: { fontFamily: 'Inter, Lato, Helvetica Neue, Arial, sans-serif' } },
+});
+```
+
+# FastAPI Routes and HTML/JS URLs
+
+Apps run inside Domino behind an nginx proxy that modifies the root URL. Do not use absolute URL paths. Use relative or dynamic URLs so API calls work correctly.
+
+# Domino API Calls
 
 ## Authentication
 
-Domino API requests are authenticated using a bearer token that when running within the platform can be retrieved using response = requests.get("http://localhost:8899/access-token") and is used to make API calls using a header:  headers = {"Authorization": token} and if the token starts with Bearer we need to include that.
+```python
+import requests
+import os
 
-Re-acquire that access token on EVERY api call because it expires very quickly. 
+def get_auth_headers():
+    # Local development override
+    api_key = os.environ.get('API_KEY_OVERRIDE')
+    if api_key:
+        return {'X-Domino-Api-Key': api_key}
+    
+    # Get ephemeral token from Domino (expires quickly!)
+    response = requests.get('http://localhost:8899/access-token')
+    token = response.text.strip()
+    
+    if token.startswith('Bearer '):
+        return {'Authorization': token}
+    return {'Authorization': f'Bearer {token}'}
+```
 
-If API_KEY_OVERRIDE env var is present than use that instead (because running outside domino), this can be used instead and is a long lasting API key we can use outside of domino for the same API requests and is used using the header name: X-Domino-Api-Key
+**Important**: Re-acquire the access token on EVERY API call because it expires very quickly.
 
 ## API Documentation & Base Paths
 
-There are TWO separate swagger files with DIFFERENT base paths:
+Two separate swagger files with DIFFERENT base paths:
 
 1. **Platform APIs** (`swagger.json`):
    - Base path: `/v4/`
@@ -101,26 +234,29 @@ There are TWO separate swagger files with DIFFERENT base paths:
 2. **Governance APIs** (`governance_swagger.json`):
    - Base path: `/api/governance/v1/`
    - Example: `{DOMINO_API_HOST}/api/governance/v1/bundles?project_id=...`
-   - Includes: Bundles, Policies, Attachments, etc.
 
-**IMPORTANT**: Do NOT add an `/api/` prefix to the v4 platform endpoints. The swagger.json `servers` section shows `/v4` and that is the correct base path to use directly.
+**IMPORTANT**: Do NOT add `/api/` prefix to v4 platform endpoints.
 
 ## Swagger Caveats
 
-The swagger files may not be 100% accurate:
-- Not all documented query parameters actually work (e.g., `sort_by` and `order_by` on the jobs endpoint do not work)
-- Test API calls manually before assuming swagger parameters are correct
-- If an API returns HTML instead of JSON, it usually means authentication failed - check your headers
+- Not all documented query parameters work - test manually
+- HTML response instead of JSON usually means authentication failed
 
 ## Environment Variables
 
-These environment variables are provided by the Domino platform when running inside Domino:
-- `DOMINO_API_HOST` - The base URL for Domino API calls
-- `DOMINO_PROJECT_ID` - The current project's ID
-- `DOMINO_PROJECT_NAME` - The current project's name
-- `DOMINO_PROJECT_OWNER` - The project owner's username
+Provided by Domino when running inside the platform:
+- `DOMINO_API_HOST` - Base URL for API calls
+- `DOMINO_PROJECT_ID` - Current project's ID
+- `DOMINO_PROJECT_NAME` - Current project's name
+- `DOMINO_PROJECT_OWNER` - Project owner's username
 
-Do not add mock/fake data if the API isn't working and instead prompt the user to set the needed env variables manually if we suspect the app is running locally and not from inside the domino platform yet.
+Do not add mock/fake data if the API isn't working. Prompt user to set env variables manually.
 
-# Running the app
-The app should run via an app.sh script and be sure to bind to 0.0.0.0 and the web UI should be accessible via port 8888 by default.
+# Running the App
+
+Run via `app.sh`, bind to `0.0.0.0`, port 8888:
+
+```bash
+#!/bin/bash
+uvicorn app:app --host 0.0.0.0 --port 8888
+```
