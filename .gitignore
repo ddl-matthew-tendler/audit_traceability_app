@@ -68,5 +68,6 @@ Thumbs.db
 *.swp
 *.log
 
-# Domino Frontend
-example_domino_frontend_code/
+# Domino Frontend (ignore contents but keep the folder structure)
+example_domino_frontend_code/*
+!example_domino_frontend_code/.gitkeep

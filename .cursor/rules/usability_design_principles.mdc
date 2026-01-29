@@ -1,6 +1,3 @@
----
-alwaysApply: false
----
 # Domino Design System Guidelines
 
 > Source: [Domino Design System Guidelines Wiki](https://dominodatalab.atlassian.net/wiki/spaces/PDT/pages/2997682182/Design+system+guidelines)
@@ -102,16 +99,37 @@ Domino's UX Principles are guidelines for how we build Domino's user experience.
 
 Use these questions as a checklist when designing and reviewing UI:
 
+### Core Experience
 - [ ] Is it clear what the user should do at each step?
 - [ ] Are choices easy to understand and supported with explanations if they aren't?
-- [ ] Are there designs and copy for unsuccessful states?
-- [ ] Are there designs and copy for empty states?
+- [ ] Does the solution consider how users can achieve their goals proactively and reactively?
+- [ ] Did you take into consideration the inputs the user needs to accomplish the step and the output it will generate?
+
+### States & Feedback
+- [ ] Are there designs and copy for unsuccessful states (errors)?
+- [ ] Are there designs and copy for empty states? Are empty states **actionable** (explaining what, why, and what to do)?
+- [ ] Do error messages distinguish between system errors (need human-readable copy) and user-generated output (OK to show raw)?
+
+### Layout & Responsiveness
 - [ ] Is the layout checked on wide and mid screen sizes (laptop vs wide monitors)?
+- [ ] If using side panels, do they **overlay** rather than crush main content?
+- [ ] In content panels with mixed elements, is spacing used to create visual groups (tight within groups, loose between groups)? Note: This does not apply to data tables, which should have uniform row spacing.
+
+### Tables & Data
+- [ ] Do truncated table cells have tooltips showing full content?
+- [ ] Are tables given adequate space, not crushed by adjacent panels?
+- [ ] Can users distinguish between rows without clicking each one?
+
+### Interactive Elements
+- [ ] Do icon-only buttons have tooltips?
+- [ ] Are disabled elements explained (why disabled, how to enable)?
+
+### Copy & Accessibility
 - [ ] Is the copy checked for grammar, spelling, punctuation, and capitalization on Domino terms (Workspace and Model API are capitalized, Artifacts is plural and capitalized)?
 - [ ] Are colors, fonts, interactions, and images accessible?
 - [ ] Are the terms and language used understandable to a non-data scientist?
-- [ ] Does the solution consider how users can achieve their goals proactively and reactively?
-- [ ] Did you take into consideration the inputs the user needs to accomplish the step and the output it will generate?
+
+### Quality
 - [ ] Did you try to break the product while QA'ing?
 
 ---
@@ -367,6 +385,13 @@ Create hierarchy without changing size by using:
 ### Law of Proximity (Gestalt Principle)
 **Elements that are close together are perceived as related.** Use whitespace strategically to create visual groups.
 
+### Why This Matters:
+When all elements are equally spaced, the UI becomes a visual mess:
+- Users can't tell which items belong together
+- Related content (like a file and its comments) appears disconnected
+- The interface feels like a flat list rather than organized information
+- Cognitive load increases as users must manually parse relationships
+
 ### Guidelines:
 - **Group related controls together** – Form fields that belong together should be visually clustered
 - **Separate unrelated sections** – Use more whitespace between distinct sections than within sections
@@ -377,6 +402,53 @@ Create hierarchy without changing size by using:
 ### The 1:2 Ratio Rule:
 - Space **within** a group should be approximately **half** the space **between** groups
 - This creates clear visual separation without explicit borders
+
+### Where Visual Grouping Rules Apply (and Don't Apply)
+
+**DO apply differential spacing to:**
+- Content panels with mixed element types (headers, content blocks, action areas)
+- File sections with nested comments or actions
+- Forms with labels, inputs, and helper text
+- Cards containing multiple related elements
+- Detail panels with sections of varying content
+
+**DO NOT apply differential spacing to:**
+- **Data tables** — Table rows should have uniform spacing. Equal row height and spacing is the correct pattern for tabular data; it enables scanning and comparison.
+- Lists of homogeneous items (e.g., a simple list of file names)
+- Navigation menus with uniform items
+
+The key distinction: **Uniform spacing is correct for homogeneous, repeating items** (like table rows). **Differential spacing is needed when grouping heterogeneous elements** (like a file header + content + comment area that should feel like one unit).
+
+### Common Spacing Anti-Patterns:
+
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| **Uniform spacing in content panels** | Mixed elements (header, content, actions) all look unrelated | Use differential spacing: tight within groups, loose between groups |
+| **No visual clustering** | Can't tell which comment belongs to which file section | Reduce space within related items, increase space between categories |
+| **Flat list of mixed content** | Headers, content, and actions all blend together | Use indentation, background colors, or cards to create hierarchy |
+| **Orphaned labels** | Labels appear equidistant from multiple elements | Place labels closer to their associated content than to other elements |
+
+### Example: File Sections with Comments
+
+❌ **Bad:** Equal 16px spacing between everything
+```
+results/stderr.txt          ← 16px gap
+Add a comment...            ← 16px gap  
+No Comments                 ← 16px gap
+results/stdout.txt          ← 16px gap
+Add a comment...            ← User can't tell which comment area belongs to which file
+```
+
+✅ **Good:** Tight spacing within groups, larger gaps between groups
+```
+results/stderr.txt          ← 8px gap (tight, belongs together)
+  Add a comment...          ← 4px gap
+  No Comments               
+                            ← 24px gap (clearly separates file sections)
+results/stdout.txt          
+  Add a comment...          
+  No Comments
+```
 
 ---
 
@@ -431,6 +503,119 @@ Use clear, action-oriented labels that describe what will happen:
 
 ---
 
+## Detail Panels: Side Drawers vs. Modals
+
+When users select an item (like a row in a table) to view details, choose the right pattern for displaying that information.
+
+### The Problem with Push-Based Side Panels
+
+When a side panel **pushes** the main content (compresses it horizontally), it can:
+- Crush table columns, making data unreadable
+- Force awkward horizontal scrolling
+- Break responsive layouts
+- Create inconsistent experiences across screen sizes
+
+### Panel Pattern Options:
+
+| Pattern | Behavior | Best For | Considerations |
+|---------|----------|----------|----------------|
+| **Overlay Side Drawer** | Slides in over content, doesn't compress main area | Quick previews, detail views, editing single items | Main content remains visible but dimmed; user can glance back |
+| **Push Side Panel** | Compresses main content to make room | Persistent context needed alongside main view | Risk of crushing main content—ensure minimum widths |
+| **Modal Dialog** | Centered overlay, blocks interaction with main content | Focused tasks, confirmations, forms requiring attention | Clearly separates contexts; can't reference main content easily |
+| **Full-Page Navigation** | Replaces current view entirely | Complex detail views, editing workflows | Clear context switch; use breadcrumbs for navigation back |
+
+### Recommendations for Domino:
+
+1. **Prefer overlay drawers** for detail panels triggered by table row clicks
+   - Main content (table) remains at full width
+   - User can still see the list context
+   - Drawer slides over, not pushing
+
+2. **Set minimum widths** if using push panels
+   - Tables should never compress below readable widths
+   - Consider hiding non-essential columns at narrow widths
+   - Provide horizontal scroll as last resort
+
+3. **Consider the data density**
+   - If the table has many columns, overlay is strongly preferred
+   - If detail view is complex, consider full-page navigation instead
+
+### Implementation Notes:
+- Overlay drawers should have a backdrop (dimmed area) that closes the drawer when clicked
+- Include a clear close button (X) in the drawer header
+- Consider keyboard navigation (Escape to close)
+- Animate smoothly (slide in from right)
+
+---
+
+## Table Design & Truncated Text
+
+### Handling Text Overflow in Tables
+
+Truncated text in tables is acceptable **if and only if** users can access the full content.
+
+### Requirements for Truncated Text:
+
+| Requirement | Implementation |
+|-------------|----------------|
+| **Tooltip on hover** | Show full text in a tooltip when user hovers over truncated cell |
+| **Sufficient default width** | Allocate enough space for typical content; truncation should be exception, not norm |
+| **Resize capability** | Allow users to drag column borders to expand width |
+| **Priority truncation** | Truncate least important columns first; keep key identifiers (like titles) readable |
+
+### Warning Signs of Bad Table Design:
+
+- **All columns truncated** – Table has too many columns or insufficient space
+- **Primary identifier truncated** – Users can't distinguish rows without clicking each one
+- **No tooltips** – Truncation without tooltips is a usability failure
+- **Table crushed by adjacent panel** – See [Detail Panels](#detail-panels-side-drawers-vs-modals) section
+
+### Table Width Considerations:
+
+1. **Evaluate column necessity** – Does the user actually need all visible columns? Consider:
+   - Column visibility toggles (let users choose)
+   - Responsive column hiding (hide least important at narrow widths)
+   - Moving secondary data to the detail view
+
+2. **Protect table space** – If a side panel opens, it should not compress the table to unusable widths
+
+3. **Consider text wrapping** – For some content (like descriptions), wrapping to 2 lines may be better than truncation
+
+---
+
+## Icon-Only Buttons
+
+### When to Use Icon-Only Buttons
+
+Icon-only buttons save space but reduce discoverability. Use them carefully.
+
+### Requirements:
+
+| Requirement | Why |
+|-------------|-----|
+| **Always include tooltips** | Icons are not universally understood; tooltips are mandatory |
+| **Use recognizable icons** | Stick to well-established iconography (trash = delete, pencil = edit) |
+| **Adequate touch/click target** | Minimum 24×24px for desktop, 44×44px for touch |
+| **Consistent placement** | Same icon should mean the same thing across the product |
+
+### When Reviewing Icon-Only Buttons:
+
+Since tooltips cannot be verified from static screenshots:
+- **Assume tooltips may be missing** – Flag as a warning to verify
+- **Check for icon clarity** – Can users guess the action without a label?
+- **Consider icon + label** – For critical or destructive actions, prefer explicit labels
+
+### Icon Button Anti-Patterns:
+
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| Icon without tooltip | Users must guess functionality | Always add descriptive tooltip |
+| Ambiguous icon | Multiple interpretations possible | Use label, or choose clearer icon |
+| Too many icon buttons | Toolbar becomes overwhelming | Group related actions, use dropdown menus |
+| Inconsistent icons | Same icon means different things in different places | Audit and standardize icon meanings |
+
+---
+
 ## Content Positioning
 
 ### Where to Put Important Content:
@@ -452,6 +637,25 @@ Use clear, action-oriented labels that describe what will happen:
 ---
 
 ## Error Handling
+
+### Distinguish System Errors from User-Generated Output
+
+Not all error-like content requires the same treatment. **Differentiate between system errors and user-generated output:**
+
+| Type | Description | How to Handle |
+|------|-------------|---------------|
+| **System errors** | Errors from Domino platform (API failures, permission issues, resource allocation) | Must be human-readable with actionable guidance |
+| **User code output** | Stack traces, logs, stderr from user's own code running in Jobs/Workspaces | OK to show raw output—this is what users expect and need for debugging |
+
+#### User Code Output (stderr, logs, stack traces)
+When displaying output from user code execution:
+- **Show the raw output** – Data scientists need the full stack trace for debugging
+- **Use monospace font** – Preserves formatting and alignment
+- **Consider enhancement (nice-to-have)** – AI-powered error parsing/summarization can add value but raw output should always be accessible
+- **Provide context** – Label clearly (e.g., "stderr", "stdout") so users know what they're looking at
+
+#### System Errors (Domino platform)
+For errors originating from the Domino platform itself:
 
 ### Error Message Principles:
 
@@ -524,6 +728,11 @@ Use clear, action-oriented labels that describe what will happen:
 - **Line charts may truncate** y-axis if zero isn't meaningful, but clearly indicate this
 - **Avoid dual y-axes** unless absolutely necessary – they're often misleading
 - **Round to appropriate precision** – Don't show "45.2367%" when "45%" suffices
+
+### Empty States in Charts:
+- **Don't show empty axes** – An empty chart with just axes is confusing
+- **Explain why there's no data** – "No runs in the selected time period" vs blank space
+- **Suggest actions** – "Run a job to see metrics here" or "Adjust your date filter"
 
 ### Interactive Charts:
 
@@ -604,6 +813,56 @@ Use clear, action-oriented labels that describe what will happen:
 
 ---
 
+## Empty States & Actionable Guidance
+
+Empty states are opportunities to guide users, not dead ends. Every empty state should answer three questions:
+
+### The Three Questions:
+
+1. **What is this?** – Brief explanation of what content would appear here
+2. **Why is it empty?** – Context for why there's nothing to show
+3. **What can I do?** – Clear action to populate or resolve the empty state
+
+### Empty State Patterns:
+
+| Context | Bad | Good |
+|---------|-----|------|
+| **No tags on a job** | "No tags" | "No tags yet — Tags help you filter and organize jobs by experiment, model, or team. [+ Add tag]" |
+| **Empty comments** | "No Comments" | "No comments yet — Add notes for your team or future reference. [Add comment]" |
+| **Empty table** | (blank) | "No jobs found. [Run a job] or adjust your filters." |
+| **Empty search results** | "No results" | "No jobs match your search. Try different keywords or [clear filters]." |
+
+### Why Actionable Empty States Matter:
+
+1. **Discoverability** – Users learn features exist and when to use them
+2. **Reduced friction** – One-click path to the action they likely want
+3. **Education** – Brief explanation teaches the feature's purpose
+4. **Confidence** – Users understand the system state (empty vs. loading vs. error)
+
+### Guidelines for Empty State Copy:
+
+- **Be concise** – One sentence for "what/why", one clear CTA
+- **Use helpful tone** – Not "You have no tags" (blame), but "No tags yet" (neutral, forward-looking)
+- **Make CTAs specific** – "Add tag" not "Get started" or "Click here"
+- **Don't over-explain** – If the feature is self-evident, just provide the action
+
+### Empty State vs. Zero State vs. Error State:
+
+| State | Meaning | Treatment |
+|-------|---------|-----------|
+| **Empty state** | No content exists yet (new user, new project) | Educational, encouraging, show path to populate |
+| **Zero state** | Content exists elsewhere but filter/search returns nothing | Help user adjust filters or broaden search |
+| **Error state** | Something went wrong | Explain error, provide recovery action |
+
+### Visual Treatment:
+
+- Use subtle, muted styling (not alarming like errors)
+- Center content vertically and horizontally in the empty area
+- Consider an illustration for first-time/onboarding empty states (but not for every empty list)
+- Keep CTAs visually prominent (button, not just link)
+
+---
+
 ## Interaction Feedback
 
 ### Users Need Feedback For:
@@ -618,4 +877,73 @@ Use clear, action-oriented labels that describe what will happen:
 - **Show progress** for file uploads and long operations
 - **Provide cancel option** for long-running operations
 
-# Tracking usability findings using this mixpanel event endpoint: TBD
+---
+
+# UX Review Guide
+
+When reviewing a UI screenshot or implementation, systematically check for these patterns.
+
+## Review Checklist by Category
+
+### Layout & Space Management
+
+- [ ] **Side panels**: Do detail panels overlay or push content? If push, is main content still usable?
+- [ ] **Table width**: Are tables being crushed? Can users read the data?
+- [ ] **Spacing in content panels**: In panels with mixed element types (headers, content, actions), is differential spacing used to group related items? Note: Tables should have uniform row spacing—this rule applies to content panels, not tabular data.
+- [ ] **Visual hierarchy**: Can you quickly identify what belongs together?
+
+### Tables & Data Display
+
+- [ ] **Truncated text**: Are tooltips present for truncated content?
+- [ ] **Column necessity**: Does the table show only needed columns, or is it overloaded?
+- [ ] **Primary identifiers**: Can users distinguish rows without clicking each one?
+- [ ] **Data alignment**: Numbers right-aligned, text left-aligned?
+
+### Interactive Elements
+
+- [ ] **Icon-only buttons**: Do they have tooltips? (Flag as warning if cannot verify)
+- [ ] **Button labels**: Are CTAs action-oriented and specific?
+- [ ] **Disabled states**: Do disabled buttons explain why they're disabled?
+- [ ] **Touch targets**: Are clickable areas large enough?
+
+### Empty & Error States
+
+- [ ] **Empty states**: Are they actionable? Do they explain what/why/what to do?
+- [ ] **Error distinction**: Are system errors human-readable? Is user-generated output (stderr) shown raw?
+- [ ] **Error guidance**: Do errors tell users how to resolve the issue?
+
+### Content & Information
+
+- [ ] **Progressive disclosure**: Is advanced content hidden until needed?
+- [ ] **Proximity grouping**: In content panels with mixed elements (not tables), are related items visually clustered?
+- [ ] **Redundant elements**: Are there unnecessary duplicates (e.g., multiple comment sections)?
+
+## Severity Classification
+
+When reporting issues, use this severity scale:
+
+| Severity | Definition | Examples |
+|----------|------------|----------|
+| **High** | Blocks user goals or causes significant confusion | Missing error guidance, table completely unreadable, no way to access truncated data |
+| **Medium** | Slows users down or reduces confidence | Missing tooltips on icons, poor visual grouping, non-actionable empty states |
+| **Low** | Minor polish issues, doesn't impede tasks | Suboptimal spacing, minor copy improvements |
+
+## What NOT to Flag
+
+- **User code output shown raw** – Stack traces in stderr/stdout are expected; users need them for debugging
+- **Localized date formats** – Trust the system's localization
+- **Dense information displays** – Some screens (like job logs) are meant for technical users who need detail
+- **Uniform table row spacing** – Tables should have equal row spacing; visual grouping rules don't apply to tabular data rows
+
+## Screenshot Review Limitations
+
+When reviewing static screenshots, note that some things cannot be verified:
+- Tooltip presence (flag as "verify tooltips exist")
+- Hover/focus states
+- Loading states
+- Responsive behavior at different widths
+- Keyboard navigation
+
+Always note these limitations rather than assuming pass/fail.
+
+---

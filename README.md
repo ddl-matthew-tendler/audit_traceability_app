@@ -2,19 +2,38 @@
 
 A starter kit for building Domino applications with Cursor, including frontend code examples, API documentation, and design system rules.
 
+## Example Prompts
+
+Once set up, generating Domino-styled apps is as simple as describing what you want:
+
+> Create a domino app that uses our APIs to summarize jobs run activity with a flexible time window selector component that defaults to last 7 days. Use a summary chart and a table below.
+
+> Build a domino app with a dashboard showing compute environment usage. Include a dropdown to filter by project, a bar chart of resource consumption, and an expandable details section for each environment.
+
+> Create a domino app that displays model deployment status across projects. Use a card grid layout with health indicators, and add a search/filter bar at the top.
+
+The Cursor rules handle API integration, Domino design patterns, and component styling automatically.
+
 ## Quick Start
 
 ### 1. Download Frontend Code
 
-Run the script to populate `example_domino_frontend_code/` with the latest frontend code:
+Download the Domino frontend code manually from:
+
+**https://github.com/cerebrotech/frontend-web-ui-service**
+
+1. Go to the repository URL above
+2. Click the green **Code** button → **Download ZIP**
+3. Extract the ZIP contents into the `example_domino_frontend_code/` folder in this project
+
+Alternatively, using git:
 
 ```bash
-./grab_front_end_code.sh
+git clone --depth 1 https://github.com/cerebrotech/frontend-web-ui-service.git example_domino_frontend_code
+rm -rf example_domino_frontend_code/.git
 ```
 
-This clones the repository (without git history) into `example_domino_frontend_code/`.
-
-> **Note:** The `example_domino_frontend_code/` folder is gitignored and won't be tracked.
+> **Note:** The contents of `example_domino_frontend_code/` are gitignored and won't be tracked.
 
 ### 2. Copy to Your Cursor Project
 
