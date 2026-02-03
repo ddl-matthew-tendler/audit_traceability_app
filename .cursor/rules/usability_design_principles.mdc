@@ -25,7 +25,7 @@ Domino's UX Principles are guidelines for how we build Domino's user experience.
 - If a task is easier to complete with the Domino UI, don't force users to complete the task using the API or their terminal if they are currently in the Domino UI
 - Lean on the API experience intentionally rather than as a replacement for creating its UI counterpart
 - Give guidance on next steps by explaining what to do with the output of an action so that users aren't stuck at a dead end
-- Organize tools around user goals and workflows so that users can complete a task seamlessly
+- Organize tools around user goals and workflows so that users can complete a task seamlessly. This means the path to a user should be obvious when interacting with an experience for a particular goal.
 - Explain concepts in-page where the user is with descriptions, tooltips, popovers, and info icons, instead of forcing them to figure them out on their own or jumping between the developer docs and the platform
 - Anticipate that not all users will know how and when to use the tools in Domino
 
@@ -267,7 +267,21 @@ Fitts's Law states that the time to acquire a target is a function of the distan
 - Tiny touch targets on mobile (especially icon-only buttons)
 - Insufficient padding around clickable elements
 - Scattering related buttons across the screen
-- Placing primary actions far from where users are focused
+- Placing actions far from where users are focused
+- **Small contextual icons in far corners of containers** – e.g., tiny comment/attachment icons in the top-right of form fields while user focus is on the left-side input. Violates both size AND distance principles simultaneously.
+
+### Anti-Pattern Example: Container Action Icons
+```
+❌ Bad: Icons are tiny AND maximally distant from focus
+┌────────────────────────────────────────────────┐
+│ What is the purpose of the model?    [💬2][📎0] │
+│ ┌────────────────────────────────────────────┐ │
+│ │ User types here (focus area)               │ │
+│ └────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────┘
+
+✅ Better: Increase target size, or show on hover, or position near related content
+```
 
 ---
 
@@ -904,7 +918,8 @@ When reviewing a UI screenshot or implementation, systematically check for these
 - [ ] **Icon-only buttons**: Do they have tooltips? (Flag as warning if cannot verify)
 - [ ] **Button labels**: Are CTAs action-oriented and specific?
 - [ ] **Disabled states**: Do disabled buttons explain why they're disabled?
-- [ ] **Touch targets**: Are clickable areas large enough?
+- [ ] **Touch targets**: Are clickable areas large enough (min 24×24px desktop)?
+- [ ] **Action positioning**: Are contextual actions near their related content, not in distant corners?
 
 ### Empty & Error States
 
