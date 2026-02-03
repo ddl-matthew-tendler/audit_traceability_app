@@ -512,7 +512,7 @@ Use clear, action-oriented labels that describe what will happen:
 | **Hide** | User will never need this action (e.g., admin-only actions for regular users) |
 | **Show with explanation** | Action unavailable with a reason (tooltip or helper text explaining why) |
 
-- Disabled buttons should have a tooltip explaining why they're disabled
+- Disabled buttons (often look grey in color) should have a tooltip explaining why they're disabled
 - Don't hide actions and then show them unexpectedly—users should understand what's possible
 
 ---
