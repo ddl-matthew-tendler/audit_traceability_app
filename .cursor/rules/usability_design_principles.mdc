@@ -2,131 +2,99 @@
 
 > Source: [Domino Design System Guidelines Wiki](https://dominodatalab.atlassian.net/wiki/spaces/PDT/pages/2997682182/Design+system+guidelines)
 
-Welcome to the Domino Design System (DDS) documentation — a guide to the design principles, components, and patterns that shape Domino's user experience. These guidelines are essential for designers, developers, and product managers to create consistent, user-friendly interfaces aligned with Domino's vision and values.
+Guidelines for designers, developers, and product managers to create consistent, user-friendly interfaces aligned with Domino's vision.
 
 ## Core Design Philosophy
 
 - Follow **atomic design methodology**
 - Use **Ant Design** as the base component library
-- Refer to **Storybook** for additional developer resources
+- Refer to [Domino Storybook](https://main--60c0de3f60dd96003bdcb1a1.chromatic.com/?path=/docs/getting-started-introduction--docs) for components
 
 ---
 
 # Domino's UX Principles
 
-Domino's UX Principles are guidelines for how we build Domino's user experience. These principles are created for designers, product managers, and engineers to use when making decisions and creating solutions to customer problems.
-
 ## 1. Pave a Smooth Path
 
-**Support users through an opinionated experience that helps them achieve their goals directly and reliably vs forcing users to figure it out on their own.**
+**Support users through an opinionated experience that helps them achieve their goals directly.**
 
-### Examples:
-- Don't drop the user into the platform without orienting them and setting up the right expectations of the platform
-- If a task is easier to complete with the Domino UI, don't force users to complete the task using the API or their terminal if they are currently in the Domino UI
+- Don't drop users into the platform without orientation
+- If a task is easier to complete with the Domino UI, don't force users to use the API or terminal
 - Lean on the API experience intentionally rather than as a replacement for creating its UI counterpart
-- Give guidance on next steps by explaining what to do with the output of an action so that users aren't stuck at a dead end
-- Organize tools around user goals and workflows so that users can complete a task seamlessly. This means the path to a user should be obvious when interacting with an experience for a particular goal.
-- Explain concepts in-page where the user is with descriptions, tooltips, popovers, and info icons, instead of forcing them to figure them out on their own or jumping between the developer docs and the platform
-- Anticipate that not all users will know how and when to use the tools in Domino
-
-### Metrics of Success:
-- Increase of models being built
-- Increase workflow completion (workflows dependent on feature areas)
-- Positive sentiment on Domino helping DSPs achieve their day-to-day goals
-
----
+- Give guidance on next steps; don't leave users at dead ends
+- Organize tools around user goals and workflows so the path is obvious
+- Explain concepts in-page with tooltips, popovers, and descriptions
+- Anticipate that not all users will know how and when to use Domino's tools
 
 ## 2. Increase User Confidence
 
-**Communicate transparently and implement consistent patterns to increase user confidence in using Domino vs assuming users can infer what's not communicated and don't notice the details.**
+**Communicate transparently and implement consistent patterns.**
 
-### Examples:
-- Write detailed error messages that give the reasons why the error occurred and how to resolve it
-- When choosing to display disabled states or disabled features, explain why they are disabled and what to do to enable them
-- Give feedback through micro-animations or status messages to indicate the action the user took was recognized
+- Write detailed error messages with reasons and resolution steps
+- Explain disabled states: why disabled and how to enable
+- Give feedback through micro-animations or status messages
 - Use correct grammar and spelling
-- Design with and implement the same design language, terms and vocabulary, and branding for a consistent user experience
-- Implement shared components so interactions and expected behaviors are consistent for the user
-
-### Metrics of Success:
-- Increase of models being built
-- Increase workflow completion (workflows dependent on feature areas)
-- Reduced number of support tickets on why a feature isn't available
-- Reduced number of support tickets on confusion on the expected behavior of a UI interaction
-- Reduced number of support tickets that could have been self-served
-
----
+- Use consistent design language, terms, and components
 
 ## 3. Reduce Effort to Value
 
-**Automate steps and reduce cognitive load as much as possible vs requiring users to put in effort for the benefit of Domino. Prioritize automating steps that Domino is confident in getting correct, are low in risk, and are easy for the user to change.**
+**Automate steps and reduce cognitive load.**
 
-### Examples:
-- Present only the necessary information to help users make the right choice to complete the step
-- Use progressive disclosure to help users through options that are advanced or unlikely to be used first
+- Present only necessary information for each step
+- Use progressive disclosure for advanced/optional features
 - Automate steps that have low value compared to user effort
-- Default configurations and settings based on what we know about the user and that are easy for users to edit
-- Reduce cognitive load by presenting information at the moment when it's applicable to the user's action vs presenting the information too early and all at once
-
-### Metrics of Success:
-- Increase of models being built
-- Increase workflow completion (workflows dependent on feature areas)
-- Positive sentiment on Domino helping DSPs achieve their day-to-day goals
-- Reduced time to completion on configurations and set up
-- Reduced time it takes users to start using Domino (create a project, launch a Workspace)
-
----
+- Default configurations and settings based on what we know about the user, and make them easy to edit
+- Present information when applicable, not all at once
 
 ## 4. Adapt to Repeat Users
 
-**Design for the repeat, intermediate user vs treating all users as forever first time users. Create experiences that set the user up for success and then get out of their way.**
+**Design for the repeat, intermediate user—not perpetual beginners.**
 
-### Examples:
-- Use an "Onboarding" and "Sideboarding" approach to teach users about a new feature. Onboard users to a new feature with the information they need to get started. Progressively guide them through the next steps (Sideboarding)
-- Onboard users, not the project. Make content dynamic to first time users vs returning users since projects may have multiple collaborators
-- Allow users to opt out of warning messages that can be triggered each time the user takes an intentional action: "Don't show me this again when I do X"
-- If applicable, allow keyboard shortcuts and keyboard accessibility on repeat actions like browsing through files or rows
-- If certain information, like a help text, is only useful after the first exposure, design for it to go away to reduce noise during repeat usage
-
-### Metrics of Success:
-- Increase of models being built
-- Increase workflow completion (workflows dependent on feature areas)
-- Increase repeat and long-term usage of Domino
+- Use "Onboarding" then "Sideboarding" approach for new features
+- Onboard users, not the project — make content dynamic to first-time vs. returning users since projects may have multiple collaborators
+- Allow users to opt out of repeated warnings: "Don't show me this again"
+- Support keyboard shortcuts for repeat actions
+- Let help text fade after first exposure to reduce noise
 
 ---
 
-# UX Design Checklist (Helpers)
+# UX Design Checklist
 
-Use these questions as a checklist when designing and reviewing UI:
+Use when designing and reviewing UI:
 
 ### Core Experience
 - [ ] Is it clear what the user should do at each step?
-- [ ] Are choices easy to understand and supported with explanations if they aren't?
+- [ ] Are choices easy to understand with explanations if needed?
 - [ ] Does the solution consider how users can achieve their goals proactively and reactively?
-- [ ] Did you take into consideration the inputs the user needs to accomplish the step and the output it will generate?
+- [ ] Did you consider the inputs the user needs and the output each step will generate?
 
 ### States & Feedback
 - [ ] Are there designs and copy for unsuccessful states (errors)?
-- [ ] Are there designs and copy for empty states? Are empty states **actionable** (explaining what, why, and what to do)?
-- [ ] Do error messages distinguish between system errors (need human-readable copy) and user-generated output (OK to show raw)?
+- [ ] Are empty states **actionable** (explaining what, why, and what to do)?
+- [ ] Do error messages distinguish system errors (human-readable) from user code output (show raw)?
 
 ### Layout & Responsiveness
-- [ ] Is the layout checked on wide and mid screen sizes (laptop vs wide monitors)?
-- [ ] If using side panels, do they **overlay** rather than crush main content?
-- [ ] In content panels with mixed elements, is spacing used to create visual groups (tight within groups, loose between groups)? Note: This does not apply to data tables, which should have uniform row spacing.
+- [ ] Is layout checked on laptop and wide monitor sizes?
+- [ ] Do side panels **overlay** rather than crush main content?
+- [ ] In content panels with mixed elements, is spacing used to create visual groups (tight within groups, loose between groups)?
+- [ ] Are tables given adequate space, not crushed by adjacent panels?
 
 ### Tables & Data
-- [ ] Do truncated table cells have tooltips showing full content?
-- [ ] Are tables given adequate space, not crushed by adjacent panels?
-- [ ] Can users distinguish between rows without clicking each one?
+- [ ] Do truncated cells have tooltips showing full content?
+- [ ] Can users distinguish rows without clicking each one?
 
 ### Interactive Elements
 - [ ] Do icon-only buttons have tooltips?
 - [ ] Are disabled elements explained (why disabled, how to enable)?
 
+### Forms & Configuration
+- [ ] Does the form require excessive scrolling? Are optional sections collapsible?
+- [ ] Do empty code editors have placeholder examples or guidance?
+- [ ] Are optional sections clearly marked? Do collapsed sections show summaries?
+
 ### Copy & Accessibility
-- [ ] Is the copy checked for grammar, spelling, punctuation, and capitalization on Domino terms (Workspace and Model API are capitalized, Artifacts is plural and capitalized)?
-- [ ] Are colors, fonts, interactions, and images accessible?
+- [ ] Is copy checked for grammar and Domino term capitalization (Workspace, Model API, Artifacts)?
+- [ ] Are colors, fonts, and interactions accessible?
 - [ ] Are the terms and language used understandable to a non-data scientist?
 
 ### Quality
@@ -139,33 +107,56 @@ Use these questions as a checklist when designing and reviewing UI:
 ## UX Principles & Styling
 
 ### General
-- **Lovable Domino** - Guidelines for delightful user experiences
-- **Domino's UX Principles** - Core principles (detailed above)
-- **3rd Party Integration UX Guide** - Guidelines for integrating third-party tools
-- **UX Writing** - Guidelines for UI copy and content
-- **This or That?** - Quick guide for common UI usage questions
+- **Lovable Domino** – Guidelines for delightful user experiences
+- **Domino's UX Principles** – Core principles (detailed above)
+- **3rd Party Integration UX Guide** – Guidelines for integrating third-party tools
+- **UX Writing** – Guidelines for UI copy and content
+- **This or That?** – Quick guide for common UI usage questions
 
 ### Foundations
-- **Typography** - Font styles, sizes, and hierarchy
-- **Colors** - Color palette and usage guidelines
-- **Icons** - Icon library and usage guidelines
-- **Spacing** - Spacing system and layout guidelines
-- **Elevation** - Shadow and depth guidelines
+- **Typography** – Font styles, sizes, and hierarchy
+- **Colors** – Color palette and usage guidelines
+- **Icons** – Icon library and usage guidelines
+- **Spacing** – Spacing system and layout guidelines
+- **Elevation** – Shadow and depth guidelines
 
 ---
 
-## Components
+# Color Tokens
 
-Whenever possible use components and patterns defined in the Domino Storybook here: https://main--60c0de3f60dd96003bdcb1a1.chromatic.com/?path=/docs/getting-started-introduction--docs
+Domino's core color tokens. Use these exact values when implementing or reviewing UI elements.
 
-# Quick Reference
+## Text
 
-| Principle | Key Takeaway |
-|-----------|--------------|
-| **Pave a smooth path** | Guide users to their goals with opinionated, helpful experiences |
-| **Increase user confidence** | Communicate transparently with consistent patterns and clear feedback |
-| **Reduce effort to value** | Automate low-value steps and reduce cognitive load |
-| **Adapt to repeat users** | Design for intermediate users, not perpetual beginners |
+| Token | Hex | Usage |
+|-------|-----|-------|
+| **Text / Heading** | `#3F4547` | Headings, labels, primary text |
+| **Text / Body** | `#7F8385` | Body copy, descriptions, secondary text |
+
+## Interactive / Buttons
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| **Primary Blue** | `#3B3BD3` | Primary button fill, tertiary/link text, active interactive elements (radio buttons, checkboxes, toggles) |
+| **On Primary** | `#FFFFFF` | Text and icons on primary blue backgrounds |
+| **Secondary Surface** | `#EDECFB` | Secondary button background |
+| **Secondary Border** | `#C9C5F2` | Secondary button border |
+| **Secondary Text** | `#1820A0` | Secondary button text, darker blue for emphasis |
+
+## Containers & Dividers
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| **Container Border** | `#DBE4E8` | Card borders, section dividers, input field borders |
+
+## Button Color Application
+
+| Button Type | Background | Border | Text |
+|-------------|-----------|--------|------|
+| **Primary** | `#3B3BD3` (Primary Blue) | — | `#FFFFFF` (On Primary) |
+| **Secondary** | `#EDECFB` (Secondary Surface) | `#C9C5F2` (Secondary Border) | `#1820A0` (Secondary Text) |
+| **Tertiary** | transparent | — | `#3B3BD3` (Primary Blue) |
+| **Link** | transparent | — | `#3B3BD3` (Primary Blue) |
 
 ---
 
@@ -173,41 +164,36 @@ Whenever possible use components and patterns defined in the Domino Storybook he
 
 > Source: [UX Writing Wiki](https://dominodatalab.atlassian.net/wiki/spaces/PDT/pages/3056599056/UX+writing)
 
-Clear, concise, and thoughtful language is just as essential to user experience as visual design and interaction patterns. This guide establishes best practices for writing in all user-facing text.
-
 ## General Principles
 
-- **Be concise** – Remove unnecessary words while maintaining clarity
-- **Avoid ambiguity** – Ensure users immediately understand the message
-- **Write in active voice** – e.g. 'Save changes' instead of 'Changes can be saved'
+- **Be concise** – Remove unnecessary words
+- **Avoid ambiguity** – Users should immediately understand
+- **Write in active voice** – "Save changes" not "Changes can be saved"
 - **Use familiar words** – Avoid jargon and technical terms unless necessary
-- **Guide users, don't just inform them** – Offer clear next steps or actions, rather than simply stating a fact (e.g. 'Your password is incorrect. Try again or reset your password.' instead of just 'Invalid password')
+- **Guide users, don't just inform** – Offer next steps, not just facts
 - **Maintain consistency** – Use the same terms for actions, objects, and features across the product
 
-## Style Guide & Formatting
+## Style Guide
 
 ### Capitalization
-- Default to **sentence case** in most scenarios
-- **Good:** "Filter by date" | **Bad:** "Filter by Date"
-- **Exceptions:**
-  - User-created entities should maintain casing as entered by the user
-  - Domino or externally branded terms (Workspace, Model API, Artifacts, etc.)
+- Default to **sentence case**: "Filter by date" not "Filter by Date"
+- Exceptions: Domino terms (Workspace, Model API, Artifacts) and user-created entities (maintain casing as entered)
+
+### Page Titles
+- Use concise patterns: "Edit [Entity]" not "Edit the definition of [Entity]"
+- **Good:** "Edit pytorch env" | **Bad:** "Edit the definition of pytorch env"
 
 ### Punctuation
-- Include punctuation only at the end of complete sentences
-- Do not use exclamation points
-- Use contractions for a natural, conversational tone
-- Use ampersands (&) only in space-constrained UI elements (otherwise, spell out "and" for readability)
+- No exclamation points
+- Use contractions for conversational tone
+- Ampersands (&) only in space-constrained UI
 
-### Numbers
-- Use numerals and symbols ('3%') instead of spelling them out ('three percent')
-- Use 'fewer than' for countable items and 'less than' for measurements
-  - **Good:** 'fewer than 10 files' and 'less than 5GB of storage'
-
-### Datetime
-- Use 'Month Day, Year' format (e.g. February 25, 2025) to avoid ambiguity across regions
-- Use relative dates (e.g. '2 days ago') in situations where users need to quickly understand when something happened
-- In general, don't use relative dates past 7 days
+### Numbers & Dates
+- Use numerals: "3%" not "three percent"
+- Use "fewer than" for countable items, "less than" for measurements
+  - **Good:** "fewer than 10 files" and "less than 5GB of storage"
+- Date format: "Month Day, Year" (February 25, 2025)
+- Relative dates ("2 days ago") only within 7 days
 
 ## Errors & Status Messages
 
@@ -217,7 +203,7 @@ Clear, concise, and thoughtful language is just as essential to user experience 
 - Be direct, concise, and speak directly to the user
 - Provide actions to resolve when possible
 - Avoid adding unnecessary or unactionable anxiety
-- Avoid unnecessary apologies or warnings, especially regarding issues unlikely to have significant impact
+- Avoid unnecessary apologies or warnings about unlikely issues
 
 ### Examples:
 
@@ -228,47 +214,40 @@ Clear, concise, and thoughtful language is just as essential to user experience 
 
 ## Accessibility & Inclusivity
 
-- Write for screen readers (avoid 'read more,' use descriptive links)
+- Write for screen readers (avoid "read more," use descriptive links)
 - Avoid culturally specific idioms or slang
 - Use gender-neutral language
 
 ## Word Catalog
 
-Ensures consistency of usage across different product contexts.
-
 | Word | Usage |
 |------|-------|
-| **Add** | Use when the entity exists and is being added to a new application (e.g. adding a user to a Project). Do not use "new" in front of "add" (redundant). |
-| **Create** | Use when the user is creating an entity that does not yet exist in the system (e.g. creating a user profile). Do not use "new" in front of "create" (redundant). |
-| **Performance** | Use to describe metrics relating to deployment integrity (e.g. model quality, data drift). |
-| **System health** | Use to describe metrics relating to system-level behavior (e.g. CPU/GPU/memory consumption, latency, error rate). |
-| **Usage** | Use to describe metrics relating to consumer usage of a deployment (e.g. Apps views). |
+| **Add** | Entity exists, being added to something (e.g., adding user to Project). Don't say "add new". |
+| **Create** | Entity doesn't exist yet (e.g., creating a user profile). Don't say "create new". |
+| **Performance** | Metrics relating to deployment integrity (e.g., model quality, data drift). |
+| **System health** | Metrics relating to system-level behavior (e.g., CPU/GPU/memory, latency, error rate). |
+| **Usage** | Metrics relating to consumer usage of a deployment (e.g., Apps views). |
 
 ---
 
 # General Usability Best Practices
 
-## Fitts's Law (JESS TO TWEAK AND REF AA GUIDELINES)
+## Fitts's Law
 
-Fitts's Law states that the time to acquire a target is a function of the distance to and size of the target. Larger, closer targets are faster to click/tap.
+The time to acquire a target depends on distance and size. Larger, closer targets are faster to click.
 
-### Key Principles:
-- **Make targets large enough to click easily** – All interactive elements need adequate size (not about importance, but usability)
-- **Reduce distance to frequent actions** – Place commonly used controls near the user's natural focus area
-- **Utilize screen edges** – Elements at screen edges are easier to target (cursor stops naturally)
-- **Group related actions together** – Reduces distance between sequential actions
+### Key Principles
+- **Make targets large enough** – Min 24×24px desktop, 44×44px touch
+- **Reduce distance to frequent actions** – Place controls near user's focus
+- **Utilize screen edges** – Elements at edges are easier to target (cursor stops naturally)
+- **Group related actions** – Reduces distance between sequential actions
 
-### Minimum Size Recommendations:
-- Touch targets: **minimum 44×44 pixels** for mobile/touch devices
-- Click targets: **minimum 24×24 pixels** for desktop mouse interactions
-- Provide adequate padding around small icons to increase the clickable area
-
-### Common Mistakes to Avoid:
-- Tiny touch targets on mobile (especially icon-only buttons)
+### Common Mistakes
+- Tiny touch targets (especially icon-only buttons)
 - Insufficient padding around clickable elements
 - Scattering related buttons across the screen
 - Placing actions far from where users are focused
-- **Small contextual icons in far corners of containers** – e.g., tiny comment/attachment icons in the top-right of form fields while user focus is on the left-side input. Violates both size AND distance principles simultaneously.
+- **Small icons in far corners** – e.g., tiny icons in top-right while user focuses on left-side input. Violates both size AND distance principles.
 
 ### Anti-Pattern Example: Container Action Icons
 ```
@@ -285,10 +264,43 @@ Fitts's Law states that the time to acquire a target is a function of the distan
 
 ---
 
-## UI Screens when possible should have a clear call to action 
+## UI Screens Should Have a Clear Call to Action
 
-This is achieved by using Primary vs Secondary button components, see our button components and guidelines in the storybook here: https://main--60c0de3f60dd96003bdcb1a1.chromatic.com/?path=/docs/components-actions-button--docs
+Every screen, modal, or form should have **one clear primary action** that is visually dominant. Use the Domino button types to establish visual hierarchy. See the [Button component guidelines](https://main--60c0de3f60dd96003bdcb1a1.chromatic.com/?path=/docs/components-actions-button--docs) in Storybook.
 
+### Button Types & Visual Hierarchy
+
+Domino buttons come in four types, each with decreasing visual weight:
+
+| Type | Style | Use For |
+|------|-------|---------|
+| **Primary** | Solid filled (`#3B3BD3` Primary Blue background, `#FFFFFF` white text) | The single main action on a screen — "Create data source", "Save changes", "Launch workspace" |
+| **Secondary** | `#EDECFB` background, `#C9C5F2` border, `#1820A0` text | Important but non-primary actions — "Cancel", "Export", "Duplicate" |
+| **Tertiary** | Text-only (`#3B3BD3` Primary Blue text, no border or background) | Lower-emphasis actions — "Reset", "Clear filters", inline actions |
+| **Link** | Link-styled text (`#3B3BD3` Primary Blue, no border or background) | Navigation-style actions — "View documentation", "Learn more" |
+
+### One Primary Button Per View
+
+- **Only one Primary button should appear per screen, modal, or form.** Multiple primary buttons compete for attention and eliminate the visual hierarchy.
+- All other actions should use Secondary, Tertiary, or Link styles based on their relative importance.
+
+### Common Patterns
+
+| Context | Primary | Secondary/Other |
+|---------|---------|-----------------|
+| **Modal/Form** | "Create data source" (solid filled) | "Cancel" (secondary outlined) |
+| **Confirmation dialog** | "Delete project" (solid filled, destructive color) | "Cancel" (secondary outlined) |
+| **Page header** | "Create project" (solid filled) | "Import" (secondary), "Filter" (tertiary) |
+| **Wizard/Stepper** | "Next" / "Finish" (solid filled) | "Back" (secondary), "Cancel" (tertiary/link) |
+
+### Anti-Patterns
+
+| Anti-Pattern | Problem | Solution |
+|--------------|---------|----------|
+| **Two Primary buttons side by side** | No clear hierarchy — user hesitates | Demote the less important action to Secondary |
+| **Primary button styled as Secondary** | Main action doesn't stand out; user may miss it | Use solid filled Primary for the main CTA |
+| **All buttons same style** | Flat hierarchy — everything looks equally important | Apply the type hierarchy: one Primary, others Secondary/Tertiary |
+| **Cancel styled as Primary** | Destructive/dismissive action competes with the intended action | Cancel should always be Secondary or Tertiary |
 
 ---
 
@@ -296,57 +308,41 @@ This is achieved by using Primary vs Secondary button components, see our button
 
 ### Reading Patterns
 
-**F-Pattern** (for text-heavy pages like articles, dashboards):
-- Users scan the top horizontal line first
-- Then move down the left side, occasionally reading across
-- **Place key information** (headlines, navigation) along the top and left side
+**F-Pattern** (text-heavy pages): Users scan top horizontal, then down the left side.
+- Place key info along top and left
 
-**Z-Pattern** (for minimal text, visual pages like landing pages):
-- Eyes move: top-left → top-right → diagonal to bottom-left → bottom-right
-- **Position key elements at Z-path points:**
-  - Top-left: Logo/branding
-  - Top-right: Navigation/secondary actions
-  - Center: Main content
-  - Bottom-right: Primary call to action
+**Z-Pattern** (minimal text pages): Eyes move top-left → top-right → bottom-left → bottom-right.
+- Place primary CTA at bottom-right
 
 ### Establishing Hierarchy
 
 1. **Size** – Larger elements draw attention first
-2. **Color & Contrast** – High contrast elements stand out
-3. **Position** – Top-left is scanned first in LTR languages
-4. **Whitespace** – Isolated elements with more whitespace appear more important
-5. **Typography weight** – Bold text draws more attention than regular weight
+2. **Color & Contrast** – High contrast stands out
+3. **Position** – Top-left scanned first (LTR languages)
+4. **Whitespace** – Isolated elements appear more important
+5. **Typography weight** – Bold draws more attention
 
 ---
 
-## Typography & Font Hierarchy
+## Typography
 
-A clear typographic hierarchy helps users scan content, understand structure, and find information quickly. Use consistent type styles across the product.
+### Type Scale (base 16px, ratio 1.25)
 
-### Type Scale
-
-Use a **modular scale** (ratio-based sizing) for consistent, harmonious typography. Common scales:
-- **1.25 (Major Third)** – Subtle, good for dense UIs
-- **1.333 (Perfect Fourth)** – Balanced, common for applications
-- **1.5 (Perfect Fifth)** – More dramatic, good for marketing pages
-
-**Example scale (base 16px, ratio 1.25):**
 | Level | Size | Use |
 |-------|------|-----|
-| H1 | 32px (2rem) | Page titles |
-| H2 | 26px (1.6rem) | Section headers |
-| H3 | 20px (1.25rem) | Subsection headers |
-| H4 | 16px (1rem) | Card titles, labels |
+| H1 | 32px | Page titles |
+| H2 | 26px | Section headers |
+| H3 | 20px | Subsection headers |
+| H4 | 16px | Card titles, labels |
 | Body | 14-16px | Primary content |
-| Caption | 12px (0.75rem) | Helper text, metadata |
-| Small | 11px (0.69rem) | Fine print, timestamps |
+| Caption | 12px | Helper text, metadata |
+| Small | 11px | Fine print, timestamps |
 
 ### Heading Hierarchy Rules
-
-1. **Don't skip levels** – Go H1 → H2 → H3, not H1 → H3 (important for accessibility)
-2. **One H1 per page** – The page title; everything else is H2 or below
-3. **Headings describe content** – Scannable headings help users find what they need
-4. **Consistent styling** – Same heading level = same visual treatment everywhere
+- Don't skip heading levels (H1 → H2 → H3)
+- One H1 per page
+- Headings should describe content for scannability
+- Same heading level = same visual treatment everywhere
 
 ### Weight & Style
 
@@ -357,9 +353,8 @@ Use a **modular scale** (ratio-based sizing) for consistent, harmonious typograp
 | **Regular (400)** | Body text, descriptions, form inputs |
 | **Light (300)** | Large display text only (not for small sizes) |
 
-### Contrast Through Typography
+### Creating Hierarchy Without Changing Size
 
-Create hierarchy without changing size by using:
 - **Weight contrast** – Bold label + regular value
 - **Color contrast** – Primary color for key info, muted gray for secondary
 - **Case** – ALL CAPS for small labels (sparingly), sentence case for content
@@ -373,74 +368,64 @@ Create hierarchy without changing size by using:
 | Body text | 1.4 – 1.6 (comfortable reading) |
 | Captions | 1.3 – 1.4 |
 
-### Common Typography Mistakes
-
-- ❌ Too many font sizes (stick to your type scale)
-- ❌ Body text too small (minimum 14px for UI, 16px preferred)
-- ❌ Insufficient contrast between heading levels
-- ❌ Using light weight fonts at small sizes (illegible)
-- ❌ Line lengths too long (aim for 50-75 characters per line)
-- ❌ Centered body text (hard to read; left-align instead)
+### Rules
+- Minimum 14px for body text, 16px preferred
+- Left-align body text (not centered)
+- Aim for 50-75 characters per line
+- Avoid light-weight fonts at small sizes
 
 ### Typography for Data
 
 | Element | Recommendation |
 |---------|----------------|
-| **Numbers in tables** | Use tabular/monospace figures for alignment |
-| **Large numbers** | Add thousand separators (1,234,567) |
-| **Units** | Smaller or lighter weight than the number |
-| **Trends (+/-)** | Use color + icon, not just symbols |
-| **Empty/null values** | Use "—" or "N/A", not "0" or blank |
+| Numbers in tables | Tabular/monospace figures |
+| Large numbers | Thousand separators (1,234,567) |
+| Units | Smaller or lighter weight than the number |
+| Trends (+/-) | Use color + icon, not just symbols |
+| Empty/null values | "—" or "N/A", not "0" or blank |
 
 ---
 
-## Whitespace & Grouping
+## Whitespace, Grouping & Visual Clustering
 
 ### Law of Proximity (Gestalt Principle)
-**Elements that are close together are perceived as related.** Use whitespace strategically to create visual groups.
+**Elements close together are perceived as related.** Use whitespace and font hierarchy together to create clear visual groups.
 
-### Why This Matters:
+### Why This Matters
 When all elements are equally spaced, the UI becomes a visual mess:
 - Users can't tell which items belong together
-- Related content (like a file and its comments) appears disconnected
+- Related content appears disconnected
 - The interface feels like a flat list rather than organized information
 - Cognitive load increases as users must manually parse relationships
 
-### Guidelines:
-- **Group related controls together** – Form fields that belong together should be visually clustered
-- **Separate unrelated sections** – Use more whitespace between distinct sections than within sections
-- **Consistent spacing scale** – Use a spacing system (e.g., 4px, 8px, 16px, 24px, 32px) for predictable rhythm
-- **Card patterns** – Use cards to group related content and create clear boundaries
-- **Section dividers** – Use subtle lines or background colors to separate major sections
-
-### The 1:2 Ratio Rule:
-- Space **within** a group should be approximately **half** the space **between** groups
+### The 1:2 Ratio Rule
+- Space **within** a group ≈ **half** the space **between** groups
 - This creates clear visual separation without explicit borders
 
-### Where Visual Grouping Rules Apply (and Don't Apply)
+### Guidelines
+- **Group related controls together** – Form fields that belong together should be visually clustered
+- **Separate unrelated sections** – Use more whitespace between distinct sections than within sections
+- **Consistent spacing scale** – Use a spacing system (e.g., 4px, 8px, 16px, 24px, 32px)
+- **Use cards** to group related content and create clear boundaries
+- **Use section dividers** – Subtle lines or background colors to separate major sections
+- **Combine whitespace with font hierarchy** – Use heading weight and size to reinforce grouping (e.g., bold section header with tighter-spaced fields below, then a larger gap before the next section)
 
-**DO apply differential spacing to:**
-- Content panels with mixed element types (headers, content blocks, action areas)
-- File sections with nested comments or actions
-- Forms with labels, inputs, and helper text
-- Cards containing multiple related elements
-- Detail panels with sections of varying content
+### Where This Applies (and Doesn't)
 
-**DO NOT apply differential spacing to:**
-- **Data tables** — Table rows should have uniform spacing. Equal row height and spacing is the correct pattern for tabular data; it enables scanning and comparison.
-- Lists of homogeneous items (e.g., a simple list of file names)
-- Navigation menus with uniform items
+**DO apply differential spacing to:** Content panels with mixed element types, forms with labels/inputs/helper text, cards with multiple related elements, detail panels with varying sections
 
-The key distinction: **Uniform spacing is correct for homogeneous, repeating items** (like table rows). **Differential spacing is needed when grouping heterogeneous elements** (like a file header + content + comment area that should feel like one unit).
+**DO NOT apply to:** Data tables (uniform row spacing is correct), homogeneous lists, navigation menus
 
-### Common Spacing Anti-Patterns:
+The key distinction: **Uniform spacing is correct for homogeneous, repeating items** (like table rows). **Differential spacing is needed when grouping heterogeneous elements** (like a file header + content + comment area).
+
+### Common Spacing Anti-Patterns
 
 | Anti-Pattern | Problem | Solution |
 |--------------|---------|----------|
-| **Uniform spacing in content panels** | Mixed elements (header, content, actions) all look unrelated | Use differential spacing: tight within groups, loose between groups |
-| **No visual clustering** | Can't tell which comment belongs to which file section | Reduce space within related items, increase space between categories |
-| **Flat list of mixed content** | Headers, content, and actions all blend together | Use indentation, background colors, or cards to create hierarchy |
-| **Orphaned labels** | Labels appear equidistant from multiple elements | Place labels closer to their associated content than to other elements |
+| **Uniform spacing in content panels** | Mixed elements all look unrelated | Tight within groups, loose between groups |
+| **No visual clustering** | Can't tell which comment belongs to which file | Reduce space within related items, increase space between categories |
+| **Flat list of mixed content** | Headers, content, and actions blend together | Use indentation, background colors, or cards |
+| **Orphaned labels** | Labels equidistant from multiple elements | Place labels closer to their associated content |
 
 ### Example: File Sections with Comments
 
@@ -468,14 +453,14 @@ results/stdout.txt
 
 ## Alignment
 
-### Principles:
+### Principles
 - **Align elements to a grid** – Creates visual order and professionalism
 - **Left-align text** in LTR languages for readability (avoid centered body text)
 - **Align form labels consistently** – Either all left-aligned or all right-aligned
-- **Align related data in tables** – Numbers should be right-aligned, text left-aligned
-- **Align action buttons** – Consistent button placement across similar views (e.g., always bottom-right for modals)
+- **Align related data in tables** – Numbers right-aligned, text left-aligned
+- **Align action buttons** – Consistent placement across similar views (e.g., always bottom-right for modals)
 
-### Common Alignment Patterns:
+### Common Alignment Patterns
 - **Form labels**: Left-aligned labels above fields, or right-aligned labels beside fields
 - **Modal actions**: Primary action on the right, secondary (Cancel) on the left
 - **Page actions**: Primary actions in top-right or prominent position
@@ -484,155 +469,111 @@ results/stdout.txt
 
 ## Calls to Action (CTAs)
 
-> See also: [Button Hierarchy (Primary / Secondary / Tertiary)](#button-hierarchy-primary--secondary--tertiary) for button styling guidelines.
-
 ### Button Labeling
-
-Use clear, action-oriented labels that describe what will happen:
 
 | Bad | Good | Why |
 |-----|------|-----|
-| "OK" | "Save changes" | Specific about what happens |
-| "Submit" | "Create project" | Names the action and object |
+| "OK" | "Save changes" | Specific |
+| "Submit" | "Create project" | Names action and object |
 | "Click here" | "View documentation" | Descriptive, accessible |
-| "Delete" | "Delete project" | Includes the object being deleted |
-| "Yes" / "No" | "Delete" / "Keep" | Action-oriented, not just confirmation |
+| "Delete" | "Delete project" | Includes the object |
+| "Yes" / "No" | "Delete" / "Keep" | Action-oriented |
 
-### Labeling Guidelines:
-- **Start with a verb** – "Save", "Delete", "Export", "Create"
-- **Be specific** – Include the object when helpful ("Delete project" not just "Delete")
-- **Match the trigger** – If user clicked "Edit profile", the save button should say "Save profile"
+### Guidelines
+- **Start with a verb** – "Save", "Delete", "Export"
+- **Be specific** – "Delete project" not just "Delete"
+- **Match the trigger** – "Edit profile" → "Save profile"
 - **Avoid jargon** – "Submit" is vague; prefer specific actions
 
 ### Disable vs. Hide
 
 | Approach | When to Use |
 |----------|-------------|
-| **Disable** (grayed out) | Action exists but isn't available yet (e.g., "Save" when form is incomplete) |
-| **Hide** | User will never need this action (e.g., admin-only actions for regular users) |
+| **Disable** | Action exists but not available yet; include tooltip explaining why |
+| **Hide** | User will never need this action (e.g., admin-only for regular users) |
 | **Show with explanation** | Action unavailable with a reason (tooltip or helper text explaining why) |
 
-- Disabled buttons (often look grey in color) should have a tooltip explaining why they're disabled
-- Don't hide actions and then show them unexpectedly—users should understand what's possible
+- Disabled buttons should have a tooltip explaining why they're disabled
+- Don't hide actions and then show them unexpectedly — users should understand what's possible
 
 ---
 
-## Detail Panels: Side Drawers vs. Modals
-
-When users select an item (like a row in a table) to view details, choose the right pattern for displaying that information.
+## Detail Panels: Drawers vs. Modals
 
 ### The Problem with Push-Based Side Panels
 
-When a side panel **pushes** the main content (compresses it horizontally), it can:
+When a side panel **pushes** content (compresses it horizontally), it can:
 - Crush table columns, making data unreadable
 - Force awkward horizontal scrolling
 - Break responsive layouts
-- Create inconsistent experiences across screen sizes
 
-### Panel Pattern Options:
+| Pattern | Best For | Considerations |
+|---------|----------|----------------|
+| **Overlay Side Drawer** | Quick previews, detail views (doesn't compress main content) | Main content remains visible but dimmed |
+| **Push Side Panel** | Persistent context needed; ensure minimum widths | Risk of crushing main content |
+| **Modal Dialog** | Focused tasks, confirmations | Can't reference main content easily |
+| **Full-Page Navigation** | Complex detail views; use breadcrumbs | Clear context switch |
 
-| Pattern | Behavior | Best For | Considerations |
-|---------|----------|----------|----------------|
-| **Overlay Side Drawer** | Slides in over content, doesn't compress main area | Quick previews, detail views, editing single items | Main content remains visible but dimmed; user can glance back |
-| **Push Side Panel** | Compresses main content to make room | Persistent context needed alongside main view | Risk of crushing main content—ensure minimum widths |
-| **Modal Dialog** | Centered overlay, blocks interaction with main content | Focused tasks, confirmations, forms requiring attention | Clearly separates contexts; can't reference main content easily |
-| **Full-Page Navigation** | Replaces current view entirely | Complex detail views, editing workflows | Clear context switch; use breadcrumbs for navigation back |
+### Recommendations
+1. **Prefer overlay drawers** for table row details — main content stays at full width
+2. **Set minimum widths** if using push panels — tables should never compress below readable widths
+3. **Consider data density** — if the table has many columns, overlay is strongly preferred; if detail view is complex, consider full-page navigation
 
-### Recommendations for Domino:
-
-1. **Prefer overlay drawers** for detail panels triggered by table row clicks
-   - Main content (table) remains at full width
-   - User can still see the list context
-   - Drawer slides over, not pushing
-
-2. **Set minimum widths** if using push panels
-   - Tables should never compress below readable widths
-   - Consider hiding non-essential columns at narrow widths
-   - Provide horizontal scroll as last resort
-
-3. **Consider the data density**
-   - If the table has many columns, overlay is strongly preferred
-   - If detail view is complex, consider full-page navigation instead
-
-### Implementation Notes:
-- Overlay drawers should have a backdrop (dimmed area) that closes the drawer when clicked
+### Implementation Notes
+- Overlay drawers should have a backdrop that closes the drawer when clicked
 - Include a clear close button (X) in the drawer header
-- Consider keyboard navigation (Escape to close)
+- Support keyboard navigation (Escape to close)
 - Animate smoothly (slide in from right)
 
 ---
 
-## Table Design & Truncated Text
+## Table Design
 
-### Handling Text Overflow in Tables
+### Truncated Text Requirements
+- **Tooltip on hover** showing full text
+- **Sufficient default width** – truncation should be exception
+- **Resize capability** – Allow users to drag column borders to expand width
+- **Priority truncation** – truncate least important columns first
 
-Truncated text in tables is acceptable **if and only if** users can access the full content.
+### Warning Signs
+- All columns truncated
+- Primary identifier truncated (users can't distinguish rows)
+- No tooltips on truncated text
+- **Table crushed by adjacent panel** – see Detail Panels section
 
-### Requirements for Truncated Text:
-
-| Requirement | Implementation |
-|-------------|----------------|
-| **Tooltip on hover** | Show full text in a tooltip when user hovers over truncated cell |
-| **Sufficient default width** | Allocate enough space for typical content; truncation should be exception, not norm |
-| **Resize capability** | Allow users to drag column borders to expand width |
-| **Priority truncation** | Truncate least important columns first; keep key identifiers (like titles) readable |
-
-### Warning Signs of Bad Table Design:
-
-- **All columns truncated** – Table has too many columns or insufficient space
-- **Primary identifier truncated** – Users can't distinguish rows without clicking each one
-- **No tooltips** – Truncation without tooltips is a usability failure
-- **Table crushed by adjacent panel** – See [Detail Panels](#detail-panels-side-drawers-vs-modals) section
-
-### Table Width Considerations:
-
-1. **Evaluate column necessity** – Does the user actually need all visible columns? Consider:
-   - Column visibility toggles (let users choose)
-   - Responsive column hiding (hide least important at narrow widths)
-   - Moving secondary data to the detail view
-
+### Table Width Considerations
+1. **Evaluate column necessity** – Does the user need all visible columns? Consider column visibility toggles, responsive column hiding, or moving secondary data to the detail view
 2. **Protect table space** – If a side panel opens, it should not compress the table to unusable widths
-
 3. **Consider text wrapping** – For some content (like descriptions), wrapping to 2 lines may be better than truncation
 
 ---
 
 ## Icon-Only Buttons
 
-### When to Use Icon-Only Buttons
+### Requirements
+- **Always include tooltips** – mandatory
+- **Use recognizable icons** – trash = delete, pencil = edit
+- **Min 24×24px** click target (44×44px for touch)
+- **Consistent placement** – Same icon should mean the same thing across the product
 
-Icon-only buttons save space but reduce discoverability. Use them carefully.
+### When Reviewing (from screenshots)
+- Assume tooltips may be missing – flag as warning to verify
+- For critical/destructive actions, prefer icon + label
 
-### Requirements:
-
-| Requirement | Why |
-|-------------|-----|
-| **Always include tooltips** | Icons are not universally understood; tooltips are mandatory |
-| **Use recognizable icons** | Stick to well-established iconography (trash = delete, pencil = edit) |
-| **Adequate touch/click target** | Minimum 24×24px for desktop, 44×44px for touch |
-| **Consistent placement** | Same icon should mean the same thing across the product |
-
-### When Reviewing Icon-Only Buttons:
-
-Since tooltips cannot be verified from static screenshots:
-- **Assume tooltips may be missing** – Flag as a warning to verify
-- **Check for icon clarity** – Can users guess the action without a label?
-- **Consider icon + label** – For critical or destructive actions, prefer explicit labels
-
-### Icon Button Anti-Patterns:
+### Icon Button Anti-Patterns
 
 | Anti-Pattern | Problem | Solution |
 |--------------|---------|----------|
-| Icon without tooltip | Users must guess functionality | Always add descriptive tooltip |
-| Ambiguous icon | Multiple interpretations possible | Use label, or choose clearer icon |
-| Too many icon buttons | Toolbar becomes overwhelming | Group related actions, use dropdown menus |
-| Inconsistent icons | Same icon means different things in different places | Audit and standardize icon meanings |
+| Icon without tooltip | Users must guess | Always add descriptive tooltip |
+| Ambiguous icon | Multiple interpretations | Use label, or choose clearer icon |
+| Too many icon buttons | Toolbar overwhelming | Group actions, use dropdown menus |
+| Inconsistent icons | Same icon means different things | Audit and standardize meanings |
 
 ---
 
 ## Content Positioning
 
-### Where to Put Important Content:
+### Where to Put Important Content
 
 | Position | Best For | Why |
 |----------|----------|-----|
@@ -643,7 +584,7 @@ Since tooltips cannot be verified from static screenshots:
 | **Right sidebar** | Contextual info, help, related items | Secondary information area |
 | **Bottom of forms** | Submit/Cancel buttons | Natural flow after completing fields |
 
-### Mobile Considerations:
+### Mobile Considerations
 - **Thumb zone** – Place primary actions within easy thumb reach (bottom of screen)
 - **Bottom navigation** – Most important nav items should be easily tappable
 - **Avoid top corners** – Difficult to reach with one hand on large phones
@@ -652,57 +593,48 @@ Since tooltips cannot be verified from static screenshots:
 
 ## Error Handling
 
-### Distinguish System Errors from User-Generated Output
+### System Errors vs. User Code Output
 
-Not all error-like content requires the same treatment. **Differentiate between system errors and user-generated output:**
-
-| Type | Description | How to Handle |
-|------|-------------|---------------|
-| **System errors** | Errors from Domino platform (API failures, permission issues, resource allocation) | Must be human-readable with actionable guidance |
-| **User code output** | Stack traces, logs, stderr from user's own code running in Jobs/Workspaces | OK to show raw output—this is what users expect and need for debugging |
+| Type | Treatment |
+|------|-----------|
+| **System errors** (API failures, permissions) | Human-readable with actionable guidance |
+| **User code output** (stderr, stack traces) | Show raw output in monospace; users need it for debugging |
 
 #### User Code Output (stderr, logs, stack traces)
-When displaying output from user code execution:
 - **Show the raw output** – Data scientists need the full stack trace for debugging
 - **Use monospace font** – Preserves formatting and alignment
-- **Consider enhancement (nice-to-have)** – AI-powered error parsing/summarization can add value but raw output should always be accessible
 - **Provide context** – Label clearly (e.g., "stderr", "stdout") so users know what they're looking at
 
-#### System Errors (Domino platform)
-For errors originating from the Domino platform itself:
+### Error Message Principles
+1. Be human-readable – "Your session expired" not "Error 401"
+2. Explain what happened and what to do next
+3. Be specific – "Password must be 8+ characters" not "Invalid password"
+4. Don't blame the user – "We couldn't find that page" not "You entered a wrong URL"
 
-### Error Message Principles:
+### Error Placement
 
-1. **Be human-readable** – Write errors in plain language, not technical jargon
-2. **Explain what happened** – "Your session expired" not "Error 401"
-3. **Tell users what to do next** – "Sign in again to continue"
-4. **Be specific** – "Password must be at least 8 characters" not "Invalid password"
-5. **Don't blame the user** – "We couldn't find that page" not "You entered a wrong URL"
-
-### Error Placement:
-
-| Error Type | Placement | When to Use |
-|------------|-----------|-------------|
-| **Inline validation** | Next to the field | Form field errors (preferred) |
+| Type | Placement | When to Use |
+|------|-----------|-------------|
+| **Inline validation** | Next to field | Form field errors (preferred) |
 | **Inline banner** | Top of form/section | Multiple related errors, form submission failures |
-| **Toast notification** | Corner of screen | Async errors, background failures, non-blocking issues |
+| **Toast notification** | Corner of screen | Async errors, background failures |
 | **Modal dialog** | Center of screen | Critical errors requiring immediate attention |
 | **Full page** | Replace content | 404, 500, permission denied, maintenance |
 
-### Inline Errors (Preferred):
-- Show errors **immediately adjacent** to the problematic field
-- Use **red color and error icon** for visibility
-- Keep error text **concise but helpful**
+### Inline Errors (Preferred)
+- Show errors immediately adjacent to the problematic field
+- Use red color and error icon for visibility
+- Keep error text concise but helpful
 - **Don't clear the user's input** – let them correct it
 
-### Toast Notifications:
-- Use for **async operations** (API failures, background sync issues)
-- **Auto-dismiss** after 5-8 seconds for non-critical messages
-- Provide a **dismiss button** for immediate closure
-- Include **action buttons** when relevant ("Retry", "View details")
-- **Stack multiple toasts** – don't overlap or replace
+### Toast Notifications
+- Use for async operations (API failures, background sync)
+- Auto-dismiss after 5-8 seconds for non-critical messages
+- Provide a dismiss button for immediate closure
+- Include action buttons when relevant ("Retry", "View details")
+- Stack multiple toasts – don't overlap or replace
 
-### Error Message Examples:
+### Error Message Examples
 
 | Bad | Good |
 |-----|------|
@@ -715,48 +647,40 @@ For errors originating from the Domino platform itself:
 
 ## Data Visualization & Charts
 
-### General Chart Principles:
+### Chart Type Selection
+- **Line charts**: Trends over time
+- **Bar charts**: Comparing categories
+- **Pie charts**: Parts of a whole (use sparingly, max 5-6 slices)
+- **Tables**: Precise values, many dimensions
 
-1. **Choose the right chart type** for the data:
-   - **Line charts**: Trends over time
-   - **Bar charts**: Comparing categories
-   - **Pie charts**: Parts of a whole (use sparingly, max 5-6 slices)
-   - **Tables**: Precise values, comparisons across many dimensions
+### General Rules
+- **Label clearly** – Title, axis labels, units, and legends should be unambiguous
+- **Don't distort data** – Start y-axis at zero for bar charts; be transparent about truncated axes
+- **Reduce chartjunk** – Remove unnecessary gridlines, 3D effects, decorations
 
-2. **Label clearly** – Title, axis labels, units, and legends should be unambiguous
-
-3. **Don't distort data** – Start y-axis at zero for bar charts; be transparent about truncated axes
-
-4. **Reduce chartjunk** – Remove unnecessary gridlines, 3D effects, and decorations
-
-### Time Series Specific Rules:
-
-- **Scale the time axis to the selected range** – If user selects "Last 7 days", show 7 days, not the full data range
-- **Use consistent time intervals** – Don't stretch/compress irregular intervals
-- **Handle missing data transparently** – Show gaps or clearly indicate interpolation
-- **Use relative dates for recent data** – "2 hours ago" is more useful than "Jan 14, 2026 5:32 PM"
-
-### Axis Scaling:
-
-- **Y-axis should start at zero** for bar charts to avoid exaggerating differences
+### Axis Scaling
+- **Y-axis starts at zero** for bar charts to avoid exaggerating differences
 - **Line charts may truncate** y-axis if zero isn't meaningful, but clearly indicate this
 - **Avoid dual y-axes** unless absolutely necessary – they're often misleading
 - **Round to appropriate precision** – Don't show "45.2367%" when "45%" suffices
 
-### Empty States in Charts:
-- **Don't show empty axes** – An empty chart with just axes is confusing
-- **Explain why there's no data** – "No runs in the selected time period" vs blank space
-- **Suggest actions** – "Run a job to see metrics here" or "Adjust your date filter"
+### Time Series Rules
+- **Scale the time axis to the selected range** – If user selects "Last 7 days", show 7 days, not the full data range
+- **Use consistent time intervals** – Don't stretch/compress irregular intervals
+- **Handle missing data transparently** – Show gaps or clearly indicate interpolation
+- **Use relative dates for recent data** – "2 hours ago" is more useful than a full timestamp
 
-### Interactive Charts:
+### Empty States in Charts
+- Don't show empty axes – an empty chart with just axes is confusing
+- Explain why there's no data: "No runs in the selected time period"
+- Suggest actions: "Run a job to see metrics here" or "Adjust your date filter"
 
-- **Provide hover/click details** – Tooltips with exact values
-- **Allow zooming and panning** for dense time series
-- **Show loading states** – Don't display empty charts while data loads
-- **Handle empty states** – Show helpful message when no data is available
+### Interactive Charts
+- Provide hover/click details with tooltips showing exact values
+- Allow zooming and panning for dense time series
+- Show loading states – don't display empty charts while data loads
 
-### Chart Color Guidelines:
-
+### Chart Color Guidelines
 - Use **colorblind-safe palettes** – Avoid red/green only distinctions
 - **Limit colors** – Max 5-7 distinct colors per chart
 - Use **sequential colors** for ordered data (light to dark)
@@ -767,63 +691,107 @@ For errors originating from the Domino platform itself:
 
 ## Form Design Best Practices
 
-### Layout:
-- **One column layouts** are easier to scan than multi-column
-- **Group related fields** together with clear section labels
+### Layout
+- **One column layouts** are easier to scan
+- **Group related fields** with section labels
 - **Logical order** – Follow natural sequence (name, email, phone, address)
-- **Show only necessary fields** – Every additional field reduces completion rates
+- **Show only necessary fields** – every field reduces completion
 
-### Labels & Instructions:
-- **Labels above fields** (not placeholder text as labels)
-- **Keep labels short** – "Email" not "Please enter your email address"
-- **Use helper text** for complex requirements (shown below the field)
-- **Mark required fields** clearly – Use asterisk (*) or "(required)"
+### Labels & Instructions
+- Labels above fields (not placeholder-as-label)
+- Keep labels short – "Email" not "Please enter your email address"
+- Helper text below field for complex requirements
+- Mark required fields with asterisk (*) or "(required)"
 
-### Validation:
-- **Validate on blur** – Check fields when user moves away, not on every keystroke
-- **Show success states** – Green checkmark for valid fields
-- **Preserve user input** on errors – Don't clear the form
-- **Scroll to first error** on form submission
+### Validation
+- Validate on blur, not every keystroke
+- Show success states – green checkmark for valid fields
+- Preserve user input on errors
+- Scroll to first error on submission
 
-### Smart Defaults:
+### Smart Defaults
 - **Pre-fill when possible** – Use known information (user's name, timezone)
 - **Select sensible defaults** – Most common option should be pre-selected
 - **Remember recent choices** – Especially for repeat workflows
 
 ### Checkbox & Toggle Semantics
 
-**Checking a checkbox should ENABLE or ADD something, not disable it.** Negative framing increases cognitive load.
+**Checked = ON / Enabled / Active** (not the reverse)
 
-#### The Rule:
-- ✅ **Checked = ON / Enabled / Active / Included**
-- ❌ **Checked = OFF / Disabled / Excluded** (avoid this!)
-
-#### Examples:
-
-| ❌ Bad (Negative Framing) | ✅ Good (Positive Framing) |
-|---------------------------|----------------------------|
+| Bad | Good |
+|-----|------|
 | ☑️ "Disable notifications" | ☑️ "Enable notifications" |
 | ☑️ "Hide advanced options" | ☑️ "Show advanced options" |
 | ☑️ "Don't send me emails" | ☑️ "Send me email updates" |
 | ☑️ "Exclude from search" | ☑️ "Include in search" |
-| ☑️ "Opt out of tracking" | ☑️ "Allow usage analytics" |
 
-#### Why This Matters:
-- Users expect **checked = active/on** (mental model from light switches, etc.)
+#### Why This Matters
+- Users expect checked = active/on (mental model from light switches)
 - Double negatives are confusing: "Uncheck to not disable" = ???
-- Scanning a list of checkboxes should quickly show what's enabled
+- Scanning checkboxes should quickly show what's enabled
 
-#### Checkbox vs. Toggle:
+#### Checkbox vs. Toggle
+
 | Control | Best For |
 |---------|----------|
 | **Checkbox** | Multiple selections, opt-ins, settings that apply on form submit |
-| **Toggle switch** | Binary on/off that takes effect immediately, single settings |
+| **Toggle switch** | Binary on/off that takes effect immediately |
 
-#### Toggle Labels:
+#### Toggle Labels
 - Put the label **before** the toggle, describing what it controls
-- The toggle itself shows the state (on/off) — don't duplicate in the label
+- The toggle shows the state (on/off) — don't duplicate in the label
 - **Good:** "Email notifications" [toggle]
-- **Bad:** "Enable email notifications" [toggle] (redundant with on/off state)
+- **Bad:** "Enable email notifications" [toggle] (redundant)
+
+---
+
+## Long Form Best Practices
+
+### When to Use Collapsible Sections
+- Forms with **more than 5-6 distinct sections** should collapse optional/advanced content
+- Primary/required fields visible; optional sections collapsed by default
+- Show summary indicators when collapsed (e.g., "2 variables defined")
+
+### Section Indicators
+- Mark optional sections with "Optional" label
+- Show item counts for collapsed sections to indicate state
+
+### When to Consider Wizards/Steppers
+- Linear workflows with dependencies between steps
+- When form has natural phases (Base → Configuration → Review)
+- When users need guidance on completion order
+
+---
+
+## Code & Script Input Fields
+
+Domino has many code editors. Apply these patterns:
+
+### Placeholder Guidance
+- Always include example code or syntax hints in empty editors
+- Show language-specific examples (bash for scripts, Dockerfile syntax)
+- Include comments explaining constraints
+
+### Examples
+
+**Dockerfile editor:**
+```
+# Add custom Dockerfile instructions
+# Example: RUN pip install torch torchvision
+# Note: Do not use FROM instruction
+```
+
+**Script editor:**
+```bash
+#!/bin/bash
+# Script runs after workspace starts
+# Example: export MY_VAR=value
+```
+
+### Visual Treatment
+- Use monospace fonts
+- Consider syntax highlighting
+- Show line numbers for multi-line editors
 
 ---
 
@@ -831,62 +799,56 @@ For errors originating from the Domino platform itself:
 
 Empty states are opportunities to guide users, not dead ends. Every empty state should answer three questions:
 
-### The Three Questions:
+1. **What is this?** – What content would appear here
+2. **Why is it empty?** – Context
+3. **What can I do?** – Clear action
 
-1. **What is this?** – Brief explanation of what content would appear here
-2. **Why is it empty?** – Context for why there's nothing to show
-3. **What can I do?** – Clear action to populate or resolve the empty state
-
-### Empty State Patterns:
+### Examples
 
 | Context | Bad | Good |
 |---------|-----|------|
-| **No tags on a job** | "No tags" | "No tags yet — Tags help you filter and organize jobs by experiment, model, or team. [+ Add tag]" |
-| **Empty comments** | "No Comments" | "No comments yet — Add notes for your team or future reference. [Add comment]" |
-| **Empty table** | (blank) | "No jobs found. [Run a job] or adjust your filters." |
-| **Empty search results** | "No results" | "No jobs match your search. Try different keywords or [clear filters]." |
+| No tags | "No tags" | "No tags yet — Tags help organize jobs. [+ Add tag]" |
+| Empty table | (blank) | "No jobs found. [Run a job] or adjust filters." |
+| Empty code editor | (blank with line number) | Placeholder with example code and syntax hints |
+| Empty search | "No results" | "No jobs match your search. Try different keywords or [clear filters]." |
 
-### Why Actionable Empty States Matter:
-
+### Why Actionable Empty States Matter
 1. **Discoverability** – Users learn features exist and when to use them
-2. **Reduced friction** – One-click path to the action they likely want
+2. **Reduced friction** – One-click path to the likely action
 3. **Education** – Brief explanation teaches the feature's purpose
 4. **Confidence** – Users understand the system state (empty vs. loading vs. error)
 
-### Guidelines for Empty State Copy:
+### Empty vs. Zero vs. Error State
 
+| State | Treatment |
+|-------|-----------|
+| **Empty** (nothing exists yet) | Educational, show path to populate |
+| **Zero** (filter returns nothing) | Help adjust filters |
+| **Error** | Explain and provide recovery action |
+
+### Guidelines for Empty State Copy
 - **Be concise** – One sentence for "what/why", one clear CTA
-- **Use helpful tone** – Not "You have no tags" (blame), but "No tags yet" (neutral, forward-looking)
-- **Make CTAs specific** – "Add tag" not "Get started" or "Click here"
-- **Don't over-explain** – If the feature is self-evident, just provide the action
+- **Use helpful tone** – "No tags yet" (neutral) not "You have no tags" (blame)
+- **Make CTAs specific** – "Add tag" not "Get started"
 
-### Empty State vs. Zero State vs. Error State:
-
-| State | Meaning | Treatment |
-|-------|---------|-----------|
-| **Empty state** | No content exists yet (new user, new project) | Educational, encouraging, show path to populate |
-| **Zero state** | Content exists elsewhere but filter/search returns nothing | Help user adjust filters or broaden search |
-| **Error state** | Something went wrong | Explain error, provide recovery action |
-
-### Visual Treatment:
-
+### Visual Treatment
 - Use subtle, muted styling (not alarming like errors)
 - Center content vertically and horizontally in the empty area
-- Consider an illustration for first-time/onboarding empty states (but not for every empty list)
+- Consider an illustration for first-time/onboarding empty states (not for every empty list)
 - Keep CTAs visually prominent (button, not just link)
 
 ---
 
 ## Interaction Feedback
 
-### Users Need Feedback For:
+### Users Need Feedback For
 - **Hover states** – Visual change when mouse is over interactive elements
 - **Click/tap acknowledgment** – Button press animation, color change
 - **Loading states** – Spinner, skeleton, progress bar for async operations
 - **Success confirmation** – Visual confirmation that action completed
 - **State changes** – Clear indication when something toggles on/off
 
-### Loading States:
+### Loading States
 - **Disable interactive elements** while loading to prevent double-submission
 - **Show progress** for file uploads and long operations
 - **Provide cancel option** for long-running operations
@@ -895,70 +857,64 @@ Empty states are opportunities to guide users, not dead ends. Every empty state 
 
 # UX Review Guide
 
-When reviewing a UI screenshot or implementation, systematically check for these patterns.
+When reviewing UI screenshots, systematically check these areas.
 
-## Review Checklist by Category
+## Review Checklist
 
-### Layout & Space Management
+### Layout & Space
+- [ ] Side panels overlay (not crush) content?
+- [ ] Table width adequate — not crushed by adjacent panels?
+- [ ] In content panels with mixed elements, is differential spacing used to group related items?
+- [ ] Visual hierarchy clear?
 
-- [ ] **Side panels**: Do detail panels overlay or push content? If push, is main content still usable?
-- [ ] **Table width**: Are tables being crushed? Can users read the data?
-- [ ] **Spacing in content panels**: In panels with mixed element types (headers, content, actions), is differential spacing used to group related items? Note: Tables should have uniform row spacing—this rule applies to content panels, not tabular data.
-- [ ] **Visual hierarchy**: Can you quickly identify what belongs together?
-
-### Tables & Data Display
-
-- [ ] **Truncated text**: Are tooltips present for truncated content?
-- [ ] **Column necessity**: Does the table show only needed columns, or is it overloaded?
-- [ ] **Primary identifiers**: Can users distinguish rows without clicking each one?
-- [ ] **Data alignment**: Numbers right-aligned, text left-aligned?
+### Tables
+- [ ] Tooltips on truncated text? (flag as warning if can't verify)
+- [ ] Column necessity — does the table show only needed columns?
+- [ ] Users can distinguish rows?
+- [ ] Data alignment correct — numbers right-aligned, text left-aligned?
 
 ### Interactive Elements
-
-- [ ] **Icon-only buttons**: Do they have tooltips? (Flag as warning if cannot verify)
-- [ ] **Button labels**: Are CTAs action-oriented and specific?
-- [ ] **Disabled states**: Do disabled buttons explain why they're disabled?
-- [ ] **Touch targets**: Are clickable areas large enough (min 24×24px desktop)?
-- [ ] **Action positioning**: Are contextual actions near their related content, not in distant corners?
+- [ ] Icon buttons have tooltips? (flag as warning)
+- [ ] CTAs action-oriented and specific?
+- [ ] Is there exactly **one Primary (solid filled) button** per view/modal? Are other buttons styled as Secondary/Tertiary?
+- [ ] Disabled states explained?
+- [ ] Touch targets large enough (min 24×24px desktop)?
+- [ ] Actions positioned near related content?
 
 ### Empty & Error States
+- [ ] Empty states actionable with what/why/action?
+- [ ] System errors human-readable?
 
-- [ ] **Empty states**: Are they actionable? Do they explain what/why/what to do?
-- [ ] **Error distinction**: Are system errors human-readable? Is user-generated output (stderr) shown raw?
-- [ ] **Error guidance**: Do errors tell users how to resolve the issue?
+### Forms
+- [ ] Form length reasonable? Optional sections collapsible?
+- [ ] Code inputs have placeholder guidance?
+- [ ] Optional sections marked?
 
 ### Content & Information
-
-- [ ] **Progressive disclosure**: Is advanced content hidden until needed?
-- [ ] **Proximity grouping**: In content panels with mixed elements (not tables), are related items visually clustered?
-- [ ] **Redundant elements**: Are there unnecessary duplicates (e.g., multiple comment sections)?
+- [ ] Progressive disclosure — advanced content hidden until needed?
+- [ ] Proximity grouping — in content panels, are related items visually clustered?
 
 ## Severity Classification
 
-When reporting issues, use this severity scale:
-
 | Severity | Definition | Examples |
 |----------|------------|----------|
-| **High** | Blocks user goals or causes significant confusion | Missing error guidance, table completely unreadable, no way to access truncated data |
-| **Medium** | Slows users down or reduces confidence | Missing tooltips on icons, poor visual grouping, non-actionable empty states |
-| **Low** | Minor polish issues, doesn't impede tasks | Suboptimal spacing, minor copy improvements |
+| **High** | Blocks goals or causes significant confusion | Missing error guidance, unreadable tables, no access to truncated data |
+| **Medium** | Slows users or reduces confidence | Missing tooltips, poor grouping, non-actionable empty states |
+| **Low** | Minor polish | Suboptimal spacing, minor copy improvements |
 
 ## What NOT to Flag
 
-- **User code output shown raw** – Stack traces in stderr/stdout are expected; users need them for debugging
-- **Localized date formats** – Trust the system's localization
-- **Dense information displays** – Some screens (like job logs) are meant for technical users who need detail
-- **Uniform table row spacing** – Tables should have equal row spacing; visual grouping rules don't apply to tabular data rows
+- User code output shown raw (expected for debugging)
+- Uniform table row spacing (correct pattern for tables)
+- Dense displays for technical users (job logs, etc.)
 
-## Screenshot Review Limitations
+## Screenshot Limitations
 
-When reviewing static screenshots, note that some things cannot be verified:
+Cannot verify from static screenshots:
 - Tooltip presence (flag as "verify tooltips exist")
 - Hover/focus states
 - Loading states
-- Responsive behavior at different widths
+- Responsive behavior
 - Keyboard navigation
-
-Always note these limitations rather than assuming pass/fail.
 
 ---

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Data Source — Improved UX</title>
+  <style>
+    /* ===== Domino Design Tokens ===== */
+    :root {
+      --text-heading:       #3F4547;
+      --text-body:          #7F8385;
+      --primary-blue:       #3B3BD3;
+      --on-primary:         #FFFFFF;
+      --secondary-surface:  #EDECFB;
+      --secondary-border:   #C9C5F2;
+      --secondary-text:     #1820A0;
+      --container-border:   #DBE4E8;
+      --bg-page:            #F5F7F8;
+      --bg-panel:           #FFFFFF;
+      --error-red:          #D93025;
+      --success-green:      #1E8E3E;
+      --info-bg:            #F0F4FF;
+    }
+
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-heading);
+      background: var(--bg-page);
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    /* ===== Side-panel / Drawer ===== */
+    .drawer {
+      width: 520px;
+      max-width: 100%;
+      background: var(--bg-panel);
+      border: 1px solid var(--container-border);
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      max-height: 96vh;
+    }
+
+    /* ===== Header ===== */
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--container-border);
+      flex-shrink: 0;
+    }
+    .drawer-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+    .btn-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--text-body);
+      padding: 4px 8px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .btn-close:hover { background: var(--bg-page); }
+
+    /* ===== Scrollable Body ===== */
+    .drawer-body {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* ===== Section grouping (1:2 ratio) ===== */
+    .form-section {
+      margin-bottom: 32px;         /* large gap BETWEEN sections */
+    }
+    .form-section:last-child { margin-bottom: 0; }
+
+    .section-header {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin-bottom: 4px;
+    }
+    .section-desc {
+      font-size: 13px;
+      color: var(--text-body);
+      margin-bottom: 16px;
+      line-height: 1.45;
+    }
+
+    /* ===== Divider between sections ===== */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--container-border);
+      margin: 0 0 32px 0;
+    }
+
+    /* ===== Form fields ===== */
+    .field {
+      margin-bottom: 16px;         /* tight gap WITHIN sections */
+    }
+    .field:last-child { margin-bottom: 0; }
+
+    .field-row {
+      display: flex;
+      gap: 16px;
+    }
+    .field-row .field { flex: 1; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin-bottom: 4px;
+    }
+    label .required {
+      color: var(--error-red);
+      margin-left: 2px;
+    }
+    label .optional {
+      font-weight: 400;
+      color: var(--text-body);
+      font-size: 12px;
+      margin-left: 4px;
+    }
+
+    .helper-text {
+      font-size: 12px;
+      color: var(--text-body);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid var(--container-border);
+      border-radius: 6px;
+      color: var(--text-heading);
+      background: var(--bg-panel);
+      transition: border-color .15s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(59,59,211,.12);
+    }
+    input::placeholder, textarea::placeholder { color: #B0B5B8; }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%237F8385' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+      cursor: pointer;
+    }
+
+    /* ===== Radio group ===== */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .radio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--container-border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .radio-option + .radio-option { margin-top: 8px; }
+    .radio-option:hover { border-color: var(--secondary-border); background: var(--secondary-surface); }
+    .radio-option.selected {
+      border-color: var(--primary-blue);
+      background: #F4F4FD;
+    }
+    .radio-option input[type="radio"] {
+      margin-top: 3px;
+      accent-color: var(--primary-blue);
+      flex-shrink: 0;
+    }
+    .radio-label-group { flex: 1; }
+    .radio-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-heading);
+      display: block;
+      margin-bottom: 2px;
+    }
+    .radio-desc {
+      font-size: 12px;
+      color: var(--text-body);
+      line-height: 1.4;
+    }
+
+    /* ===== Conditional fields (progressive disclosure) ===== */
+    .conditional-fields {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-page);
+      border-radius: 8px;
+      border: 1px solid var(--container-border);
+    }
+    .conditional-fields.visible { display: block; }
+    .conditional-fields .field { margin-bottom: 12px; }
+    .conditional-fields .field:last-child { margin-bottom: 0; }
+
+    /* ===== Info callout ===== */
+    .info-callout {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-body);
+      background: var(--info-bg);
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+    .info-callout svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ===== Footer ===== */
+    .drawer-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--container-border);
+      flex-shrink: 0;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background .15s, box-shadow .15s;
+    }
+    .btn-primary {
+      background: var(--primary-blue);
+      color: var(--on-primary);
+    }
+    .btn-primary:hover { background: #2F2FBA; }
+    .btn-secondary {
+      background: var(--secondary-surface);
+      border: 1px solid var(--secondary-border);
+      color: var(--secondary-text);
+    }
+    .btn-secondary:hover { background: #E0DEFA; }
+
+    /* ===== Connection config reveal ===== */
+    .connection-section {
+      display: none;
+    }
+    .connection-section.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="drawer">
+  <!-- ===== Header ===== -->
+  <div class="drawer-header">
+    <h1>Create data source</h1>
+    <button class="btn-close" aria-label="Close" title="Close">&times;</button>
+  </div>
+
+  <!-- ===== Scrollable body ===== -->
+  <div class="drawer-body">
+
+    <!-- ── Section 1: Data source type ── -->
+    <div class="form-section">
+      <div class="section-header">Data source type</div>
+      <div class="section-desc">Select the type of external data you want to connect to Domino.</div>
+
+      <div class="field">
+        <label for="ds-type">Type <span class="required">*</span></label>
+        <select id="ds-type">
+          <option value="" disabled selected>Select a data source type</option>
+          <option value="postgres">PostgreSQL</option>
+          <option value="mysql">MySQL</option>
+          <option value="redshift">Amazon Redshift</option>
+          <option value="snowflake">Snowflake</option>
+          <option value="bigquery">BigQuery</option>
+          <option value="s3">Amazon S3</option>
+        </select>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 2: Connection configuration (shown after type is selected) ── -->
+    <div class="form-section connection-section visible" id="connection-section">
+      <div class="section-header">Connection configuration</div>
+      <div class="section-desc">Enter the details required to connect to your data source.</div>
+
+      <div class="field">
+        <label for="ds-name">Display name <span class="required">*</span></label>
+        <input type="text" id="ds-name" placeholder="e.g., Production Database" />
+        <div class="helper-text">A friendly name to identify this data source in Domino.</div>
+      </div>
+
+      <div class="field">
+        <label for="ds-desc">Description <span class="optional">(optional)</span></label>
+        <textarea id="ds-desc" rows="2" placeholder="What is this data source used for?"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="ds-host">Host <span class="required">*</span></label>
+        <input type="text" id="ds-host" placeholder="e.g., db.example.com" />
+      </div>
+
+      <!-- Host + Port on one row to reduce vertical space -->
+      <div class="field-row">
+        <div class="field">
+          <label for="ds-port">Port <span class="required">*</span></label>
+          <input type="number" id="ds-port" placeholder="5432" value="5432" />
+        </div>
+        <div class="field">
+          <label for="ds-dbname">Database name <span class="required">*</span></label>
+          <input type="text" id="ds-dbname" placeholder="e.g., analytics_prod" />
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 3: Authentication ── -->
+    <div class="form-section">
+      <div class="section-header">Authentication</div>
+      <div class="section-desc">Choose how users will authenticate to this data source.</div>
+
+      <div class="field">
+        <label>Credential type <span class="required">*</span></label>
+
+        <div class="radio-group">
+          <!-- Option A: Individual -->
+          <label class="radio-option selected" id="opt-individual">
+            <input type="radio" name="cred-type" value="individual" checked
+                   onchange="handleCredType(this)" />
+            <div class="radio-label-group">
+              <span class="radio-label">Individual credentials</span>
+              <span class="radio-desc">Each user provides their own credentials when accessing this data source.</span>
+            </div>
+          </label>
+
+          <!-- Option B: Service account -->
+          <label class="radio-option" id="opt-service">
+            <input type="radio" name="cred-type" value="service"
+                   onchange="handleCredType(this)" />
+            <div class="radio-label-group">
+              <span class="radio-label">Service account</span>
+              <span class="radio-desc">Provide shared credentials applied automatically for all users with access.</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Conditional: service account credentials (progressive disclosure) -->
+      <div class="conditional-fields" id="service-fields">
+        <div class="field">
+          <label for="sa-user">Username <span class="required">*</span></label>
+          <input type="text" id="sa-user" placeholder="Enter username" />
+        </div>
+        <div class="field">
+          <label for="sa-pass">Password <span class="required">*</span></label>
+          <input type="password" id="sa-pass" placeholder="Enter password" />
+        </div>
+
+        <div class="info-callout">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#3B3BD3" stroke-width="1.5"/>
+            <path d="M8 7v4M8 5h.01" stroke="#3B3BD3" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span>Credentials are stored securely in Domino's secret store backed by HashiCorp Vault.</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- / drawer-body -->
+
+  <!-- ===== Footer with clear button hierarchy ===== -->
+  <div class="drawer-footer">
+    <button class="btn btn-secondary">Cancel</button>
+    <button class="btn btn-primary">Create data source</button>
+  </div>
+</div>
+
+<script>
+  // Progressive disclosure: show/hide service account fields
+  function handleCredType(radio) {
+    const serviceFields = document.getElementById('service-fields');
+    const optIndividual = document.getElementById('opt-individual');
+    const optService    = document.getElementById('opt-service');
+
+    if (radio.value === 'service') {
+      serviceFields.classList.add('visible');
+      optService.classList.add('selected');
+      optIndividual.classList.remove('selected');
+    } else {
+      serviceFields.classList.remove('visible');
+      optIndividual.classList.add('selected');
+      optService.classList.remove('selected');
+    }
+  }
+
+  // Optional: reveal connection config after type is chosen
+  document.getElementById('ds-type').addEventListener('change', function () {
+    document.getElementById('connection-section').classList.add('visible');
+  });
+</script>
+
+</body>
+</html>
