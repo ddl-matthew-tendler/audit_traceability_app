@@ -709,6 +709,9 @@ When a side panel **pushes** content (compresses it horizontally), it can:
 - Preserve user input on errors
 - Scroll to first error on submission
 
+### Radio selectors & checkboxes as click targets
+- When there's a label + radio or label + checkbox pair, clicking anywhere on the pair should toggle the form element (not just the checkbox or radio itself)
+
 ### Smart Defaults
 - **Pre-fill when possible** – Use known information (user's name, timezone)
 - **Select sensible defaults** – Most common option should be pre-selected
