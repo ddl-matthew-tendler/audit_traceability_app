@@ -125,6 +125,8 @@ The app listens on `0.0.0.0:8888`. When running inside Domino, set `DOMINO_API_H
 1. **Build the client** (`npm run build`) and **commit `client/dist`** before pushing. Domino uses Python-only environments, so the frontend must be pre-built.
 2. Use `app.sh` as the app start command; the app binds to port 8888 and uses relative URLs for API and assets.
 
+**If the app fails to load or deploy**, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common failure modes and how to diagnose them from Domino logs.
+
 ## API Reference
 
 - **[swagger.json](swagger.json)** - Main API documentation

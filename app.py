@@ -5,6 +5,7 @@ Traceability Explorer - FastAPI server for Domino deployment.
 - Bind 0.0.0.0:8888 for Domino
 """
 import os
+import sys
 from pathlib import Path
 
 import requests
@@ -21,6 +22,25 @@ app = FastAPI()
 DIST_PATH = Path(__file__).parent / "client" / "dist"
 
 
+def _log(msg: str) -> None:
+    """Log to stdout (Domino captures this)."""
+    print(msg, flush=True)
+    sys.stdout.flush()
+
+
+@app.on_event("startup")
+async def startup_log():
+    """Emit startup diagnostics to stdout for Domino log visibility."""
+    _log("=== Traceability Explorer startup ===")
+    _log(f"  client/dist exists: {DIST_PATH.exists()}")
+    _log(f"  client/dist/assets exists: {(DIST_PATH / 'assets').exists()}")
+    _log(f"  index.html exists: {(DIST_PATH / 'index.html').exists()}")
+    _log(f"  DOMINO_API_HOST set: {bool(DOMINO_API_HOST)}")
+    if DOMINO_API_HOST:
+        _log(f"  DOMINO_API_HOST: {DOMINO_API_HOST[:60]}{'...' if len(DOMINO_API_HOST) > 60 else ''}")
+    _log("=== Ready for requests ===")
+
+
 async def get_auth_headers(request: Request) -> dict:
     """Domino auth: get headers for outbound API calls. Re-acquire token on every call."""
     api_key = os.environ.get("API_KEY_OVERRIDE") or (
@@ -35,6 +55,7 @@ async def get_auth_headers(request: Request) -> dict:
         bearer = token if token.startswith("Bearer ") else f"Bearer {token}"
         return {"Authorization": bearer}
     except Exception as e:
+        _log(f"getAuthHeaders failed: {e}")
         raise RuntimeError(f"getAuthHeaders: {e}") from e
 
 
@@ -65,7 +86,14 @@ async def audit(request: Request):
             )
         return JSONResponse(data)
     except Exception as e:
+        _log(f"GET /api/audit error: {e}")
         return JSONResponse({"error": str(e)}, status_code=502)
+
+
+@app.get("/health")
+async def health():
+    """Lightweight health check for Domino readiness probes. Returns immediately."""
+    return {"status": "ok"}
 
 
 @app.get("/api/users")
@@ -91,6 +119,7 @@ async def users(request: Request):
             )
         return JSONResponse(data)
     except Exception as e:
+        _log(f"GET /api/users error: {e}")
         return JSONResponse({"error": str(e)}, status_code=502)
 
 
@@ -116,6 +145,7 @@ async def me(request: Request):
             )
         return JSONResponse(data)
     except Exception as e:
+        _log(f"GET /api/me error: {e}")
         return JSONResponse({"error": str(e)}, status_code=502)
 
 
@@ -135,4 +165,8 @@ async def serve_spa(path: str):
     index_path = DIST_PATH / "index.html"
     if index_path.exists():
         return FileResponse(index_path)
-    return JSONResponse({"error": "Frontend not built. Run: npm run build"}, status_code=503)
+    _log("Serving 503: client/dist not found or index.html missing. Run: npm run build")
+    return JSONResponse(
+        {"error": "Frontend not built. Run: npm run build and commit client/dist"},
+        status_code=503,
+    )
