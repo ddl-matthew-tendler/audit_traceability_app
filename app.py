@@ -15,10 +15,9 @@ from fastapi.staticfiles import StaticFiles
 
 TOKEN_URL = "http://localhost:8899/access-token"
 DOMINO_API_HOST = os.environ.get("DOMINO_API_HOST", "").strip() or None
-# Audit Trail API path - Domino Platform API (Cloud) uses /auditevents per
-# https://docs.dominodatalab.com/en/latest/api_guide/8c929e/domino-platform-api-reference/#_fetchAuditEvents
-# Admin Guide uses /api/audittrail/v1/auditevents for on-prem; override via env if needed
-AUDIT_API_PATH = os.environ.get("AUDIT_API_PATH", "/auditevents").strip()
+# Audit Trail API path - Admin Guide uses /api/audittrail/v1/auditevents (tested working).
+# Platform API uses /auditevents; override via AUDIT_API_PATH if needed.
+AUDIT_API_PATH = os.environ.get("AUDIT_API_PATH", "/api/audittrail/v1/auditevents").strip()
 
 app = FastAPI()
 
@@ -48,8 +47,10 @@ async def startup_log():
 
 async def get_auth_headers(request: Request) -> dict:
     """Domino auth: get headers for outbound API calls. Re-acquire token on every call."""
-    api_key = os.environ.get("API_KEY_OVERRIDE") or (
-        request.headers.get("X-API-Key-Override") if request else None
+    api_key = (
+        os.environ.get("API_KEY_OVERRIDE")
+        or os.environ.get("DOMINO_USER_API_KEY")
+        or (request.headers.get("X-API-Key-Override") if request else None)
     )
     if api_key:
         return {"X-Domino-Api-Key": api_key}
@@ -65,7 +66,47 @@ async def get_auth_headers(request: Request) -> dict:
 
 
 def get_domino_host() -> str | None:
-    return DOMINO_API_HOST
+    """Return API host, normalizing apps. subdomain to root (APIs live on root domain)."""
+    host = DOMINO_API_HOST
+    if not host:
+        return None
+    host = host.rstrip("/")
+    try:
+        from urllib.parse import urlparse
+        p = urlparse(host)
+        if p.netloc and p.netloc.startswith("apps."):
+            netloc = p.netloc[5:]  # strip "apps."
+            return f"{p.scheme or 'https'}://{netloc}"
+    except Exception:
+        pass
+    return host
+
+
+def _normalize_audit_event(raw: dict) -> dict:
+    """
+    Map Admin Guide API event shape to our frontend format.
+    API uses: actor.{name}, action.{eventName}, in.{name}, targets[].entity, timestamp.
+    """
+    actor = raw.get("actor") or {}
+    action = raw.get("action") or {}
+    context_in = raw.get("in") or {}
+    targets = raw.get("targets") or []
+    first_target = targets[0] if targets else {}
+    entity = first_target.get("entity") or {}
+
+    return {
+        "id": raw.get("id"),
+        "event": action.get("eventName") or raw.get("event") or "",
+        "timestamp": raw.get("timestamp"),
+        "actorId": actor.get("id") or actor.get("userId"),
+        "actorName": actor.get("name"),
+        "targetType": entity.get("entityType") or raw.get("targetType"),
+        "targetId": entity.get("id") or raw.get("targetId"),
+        "targetName": entity.get("name") or raw.get("targetName"),
+        "withinProjectId": context_in.get("id") or raw.get("withinProjectId"),
+        "withinProjectName": context_in.get("name") or raw.get("withinProjectName"),
+        "metadata": raw.get("metadata") or {},
+    }
 
 
 @app.get("/api/audit")
@@ -96,6 +137,14 @@ async def audit(request: Request):
                     "(e.g. Domino Cloud, plan, or admin-only). Try AUDIT_API_PATH env or contact your admin."
                 )
             return JSONResponse({"error": err_msg}, status_code=r.status_code)
+
+        # Admin Guide API returns {"events": [...]}; normalize to our format
+        if isinstance(data, dict) and "events" in data:
+            events = data.get("events", [])
+            normalized = [_normalize_audit_event(ev) for ev in events if isinstance(ev, dict)]
+            return JSONResponse(normalized)
+        if isinstance(data, list):
+            return JSONResponse([_normalize_audit_event(ev) for ev in data if isinstance(ev, dict)])
         return JSONResponse(data)
     except Exception as e:
         _log(f"GET /api/audit error: {e}")

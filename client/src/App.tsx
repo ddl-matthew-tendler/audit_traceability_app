@@ -6,7 +6,7 @@ import { TimelineView } from './components/TimelineView';
 import { TableView } from './components/TableView';
 import { DetailPanel } from './components/DetailPanel';
 import { useAppStore } from './store/useAppStore';
-import { useAuditEvents, useCurrentUser } from './api/hooks';
+import { useAuditEvents } from './api/hooks';
 import { getDefaultTimeRange, timeRangeToParams } from './components/TimeRangePicker';
 import type { AuditEvent } from './types';
 
@@ -22,24 +22,17 @@ function eventId(ev: AuditEvent, index: number): string {
 
 function AppContent() {
   const [timeRange, setTimeRange] = useState(getDefaultTimeRange);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
 
   const { viewMode, searchQuery, categoryFilters, projectFilter, targetIdFilter, highContrast } = useAppStore();
-  const { data: currentUser } = useCurrentUser();
 
-  const params = useMemo(() => {
-    const base = { ...timeRangeToParams(timeRange), limit: 2000 };
-    if (selectedUserIds.length === 1) {
-      return { ...base, actorId: selectedUserIds[0] };
-    }
-    const currentId =
-      currentUser?.id ?? currentUser?.userId ?? currentUser?.userName;
-    if (typeof currentId === 'string' && currentId) {
-      return { ...base, actorId: currentId };
-    }
-    return base;
-  }, [timeRange, selectedUserIds, currentUser]);
+  const params = useMemo(
+    () => ({
+      ...timeRangeToParams(timeRange),
+      limit: 100,
+    }),
+    [timeRange]
+  );
 
   const { data: events = [], isLoading, isFetching, isError, error, refetch, dataUpdatedAt } = useAuditEvents(
     params,
@@ -53,12 +46,6 @@ function AppContent() {
 
   const filtered = useMemo(() => {
     let list = events;
-    if (selectedUserIds.length > 1) {
-      list = list.filter((e) => {
-        const id = e.actorId ?? e.actorName;
-        return id && selectedUserIds.includes(id);
-      });
-    }
     if (projectFilter) {
       list = list.filter(
         (e) => e.withinProjectId === projectFilter || e.withinProjectName === projectFilter
@@ -79,7 +66,7 @@ function AppContent() {
       });
     }
     return list;
-  }, [events, selectedUserIds, projectFilter, targetIdFilter, searchQuery]);
+  }, [events, projectFilter, targetIdFilter, searchQuery]);
 
   const projects = useMemo(() => {
     const set = new Set<string>();
@@ -108,8 +95,6 @@ function AppContent() {
       <Toolbar
         timeRange={timeRange}
         onTimeRangeChange={setTimeRange}
-        selectedUserIds={selectedUserIds}
-        onSelectedUserIdsChange={setSelectedUserIds}
         onRefresh={() => refetch()}
         lastUpdated={dataUpdatedAt ? new Date(dataUpdatedAt) : null}
         eventCount={filtered.length}
@@ -161,7 +146,7 @@ function AppContent() {
               events={filtered}
               onNodeSelect={handleNodeSelect}
               selectedEventId={selectedEventId}
-              onShowByUser={(id) => setSelectedUserIds([id])}
+              onShowByUser={() => {}}
             />
           ) : viewMode === 'timeline' ? (
             <TimelineView

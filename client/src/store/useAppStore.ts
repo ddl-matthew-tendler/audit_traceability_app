@@ -36,7 +36,7 @@ const defaultCategories: Record<string, boolean> = {
 };
 
 export const useAppStore = create<AppState>((set) => ({
-  viewMode: 'dag',
+  viewMode: 'table',
   setViewMode: (viewMode) => set({ viewMode }),
   selectedEventId: null,
   setSelectedEventId: (selectedEventId) => set({ selectedEventId }),

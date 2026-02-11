@@ -1,7 +1,5 @@
 import { useAppStore, type ViewMode } from '../store/useAppStore';
 import { TimeRangePicker, type TimeRange } from './TimeRangePicker';
-import { UserFilter } from './UserFilter';
-import { useUsers, useCurrentUser } from '../api/hooks';
 
 const VIEW_LABELS: { id: ViewMode; label: string }[] = [
   { id: 'dag', label: 'DAG' },
@@ -12,8 +10,6 @@ const VIEW_LABELS: { id: ViewMode; label: string }[] = [
 interface ToolbarProps {
   timeRange: TimeRange;
   onTimeRangeChange: (r: TimeRange) => void;
-  selectedUserIds: string[];
-  onSelectedUserIdsChange: (ids: string[]) => void;
   onRefresh: () => void;
   lastUpdated: Date | null;
   eventCount: number;
@@ -24,8 +20,6 @@ interface ToolbarProps {
 export function Toolbar({
   timeRange,
   onTimeRangeChange,
-  selectedUserIds,
-  onSelectedUserIdsChange,
   onRefresh,
   lastUpdated: _lastUpdated,
   eventCount: _eventCount,
@@ -50,9 +44,6 @@ export function Toolbar({
     setHighContrast,
   } = useAppStore();
 
-  const { data: users = [], isLoading: usersLoading } = useUsers();
-  const { data: currentUser } = useCurrentUser();
-
   return (
     <>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-domino-border bg-[#2E2E38] px-4 py-2 text-white">
@@ -61,14 +52,6 @@ export function Toolbar({
           <span className="text-lg font-medium">Traceability Explorer</span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <UserFilter
-            users={users}
-            currentUser={currentUser ?? null}
-            selectedUserIds={selectedUserIds}
-            onSelectionChange={onSelectedUserIdsChange}
-            disabled={isLoading}
-            loading={usersLoading}
-          />
           <TimeRangePicker value={timeRange} onChange={onTimeRangeChange} disabled={isLoading} />
         </div>
       </header>

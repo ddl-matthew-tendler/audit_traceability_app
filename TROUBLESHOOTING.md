@@ -104,7 +104,7 @@ Frontend not built. Run: npm run build and commit client/dist
 
 ---
 
-### 6b. `Public api endpoint '/api/audittrail/v1/auditevents' not found`
+### 6b. `Public api endpoint '/api/audittrail/v1/auditevents' not found` (or 404)
 
 **Symptoms:** App loads, but shows "Unable to load audit events" with the above message.
 
@@ -115,8 +115,8 @@ Frontend not built. Run: npm run build and commit client/dist
 1. **Check your Domino version and plan** – The Unified Audit Trail is available in Domino 6.0+. Access may require SysAdmin or GovernanceAdmin role ([docs](https://docs.dominodatalab.com/en/6.0/admin_guide/85fbb1/domino-unified-audit-trail/)).
 
 2. **Try an alternate path** – Set the `AUDIT_API_PATH` environment variable in your Domino app/run config:
-   - **Domino Cloud (Platform API):** `/auditevents` (default) – see [Platform API reference](https://docs.dominodatalab.com/en/latest/api_guide/8c929e/domino-platform-api-reference/#_fetchAuditEvents)
-   - **On-prem (Admin Guide):** `/api/audittrail/v1/auditevents`
+   - **Admin Guide (default):** `/api/audittrail/v1/auditevents` – works with API key auth
+   - **Platform API (Cloud):** `/auditevents` – if your deployment uses the Platform API
 
 3. **Contact your Domino admin** – Confirm that the Audit Trail API is enabled and what path/credentials are required.
 
@@ -161,7 +161,7 @@ On startup, the app logs to stdout:
   client/dist/assets exists: True
   index.html exists: True
   DOMINO_API_HOST set: True
-  AUDIT_API_PATH: /auditevents
+  AUDIT_API_PATH: /api/audittrail/v1/auditevents
   DOMINO_API_HOST: https://...
 === Ready for requests ===
 ```
