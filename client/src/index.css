@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --domino-primary: #3B3BD3;
+  --domino-text: #3F4547;
+  --domino-text-body: #7F8385;
+  --domino-border: #DBE4E8;
+  --domino-bg: #FAFAFA;
+  --domino-container: #FFFFFF;
+}
+
+/* High contrast mode */
+[data-high-contrast="true"] {
+  --domino-primary: #1820A0;
+  --domino-text: #1a1a1a;
+  --domino-text-body: #333;
+  --domino-border: #111;
+  --domino-bg: #f0f0f0;
+  --domino-container: #fff;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* React Flow overrides so nodes are visible on Domino background */
+.react-flow__node {
+  font-size: 12px;
+}
+.react-flow__edge-path {
+  stroke-width: 1.5;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

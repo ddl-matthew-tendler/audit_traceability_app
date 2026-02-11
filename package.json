@@ -1,0 +1,21 @@
+{
+  "name": "traceability-explorer",
+  "private": true,
+  "scripts": {
+    "build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "node server/index.js",
+    "dev:client": "cd client && npm run dev",
+    "postinstall": "cd client && npm install"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

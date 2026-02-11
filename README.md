@@ -93,6 +93,36 @@ Build a settings page with a form for user preferences
 
 This tells Cursor to follow Domino's design system (button hierarchy, typography, spacing, error handling, etc.) whether you're building new UI, reviewing existing code, or asking for improvements.
 
+## Traceability Explorer App
+
+This repo includes a **Traceability Explorer** app that visualizes Domino Audit Trail events as an interactive DAG (Directed Acyclic Graph).
+
+### Stack
+
+- **Backend:** Node.js + Express (proxies Domino Audit Trail and v4 users APIs with auth)
+- **Frontend:** React 18, Vite, Tailwind CSS, React Flow, Zustand, React Query, date-fns
+
+### Build and run
+
+```bash
+# Install dependencies (root + client)
+npm install
+
+# Build the client
+npm run build
+
+# Start the server (serves client/dist and /api/*)
+./app.sh
+# or: node server/index.js
+```
+
+The app listens on `0.0.0.0:8888`. When running inside Domino, set `DOMINO_API_HOST`; the server uses `http://localhost:8899/access-token` for auth. For local dev without Domino, use `API_KEY_OVERRIDE` with a Domino API key.
+
+### Deploy on Domino (e.g. se-demo.domino.tech)
+
+1. Build the client (`npm run build`) and commit `client/dist` or ensure the build runs in your deploy pipeline.
+2. Use `app.sh` as the app start command; the app binds to port 8888 and uses relative URLs for API and assets.
+
 ## API Reference
 
 - **[swagger.json](swagger.json)** - Main API documentation
