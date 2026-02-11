@@ -10,7 +10,7 @@ from pathlib import Path
 
 import requests
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 TOKEN_URL = "http://localhost:8899/access-token"
@@ -108,117 +108,78 @@ async def health():
     return {"status": "ok"}
 
 
-# Inline test page HTML - minimal API tester for debugging
-_TEST_HTML = """
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>API Test - Traceability</title>
-  <style>
-    body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { font-size: 1.25rem; }
-    .test { margin: 1rem 0; padding: 1rem; border: 1px solid #ccc; border-radius: 6px; }
-    .test h2 { margin: 0 0 0.5rem; font-size: 1rem; }
-    .ok { border-color: #28a464; background: #f0fff4; }
-    .fail { border-color: #c20a29; background: #fff0f2; }
-    .pending { border-color: #ccc; background: #fafafa; }
-    pre { margin: 0.5rem 0; padding: 0.5rem; background: #f5f5f5; overflow-x: auto; font-size: 12px; }
-    button { padding: 12px 24px; font-size: 1.1rem; cursor: pointer; background: #543FDE; color: white; border: none; border-radius: 6px; }
-    button:hover { background: #3B23D1; }
-  </style>
-</head>
-<body>
-  <h1>API Test – Traceability Explorer</h1>
-  <p>Run these tests and report back any errors. Same APIs as the main app.</p>
-  <p><strong>Click the button below, or tests will run automatically when the page loads.</strong></p>
-  <button type="button" id="run-btn" onclick="runAll()">Run All Tests</button>
-  <div id="results"></div>
-  <script>
-    const api = new URL('./api', window.location.href).pathname;
+@app.get("/api/test")
+async def api_test(request: Request):
+    """
+    Run all APIs the app uses: /me, /users, /audit (with and without actorId).
+    Returns JSON with pass/fail and raw responses. No UI.
+    """
+    import time
 
-    async function run(name, fn) {
-      const div = document.getElementById(name);
-      div.className = 'test pending';
-      div.querySelector('.out').textContent = 'Running...';
-      try {
-        const result = await fn();
-        div.className = 'test ok';
-        div.querySelector('.out').textContent = JSON.stringify(result, null, 2);
-      } catch (e) {
-        div.className = 'test fail';
-        div.querySelector('.out').textContent = e.message || String(e);
-      }
-    }
+    base = get_domino_host()
+    if not base:
+        return JSONResponse({"error": "DOMINO_API_HOST not set"}, status_code=503)
 
-    async function runAll() {
-      const r = document.getElementById('results');
-      r.innerHTML = `
-        <div class="test pending" id="test1">
-          <h2>1. GET /api/me (current user)</h2>
-          <pre class="out">-</pre>
-        </div>
-        <div class="test pending" id="test2">
-          <h2>2. GET /api/users (list users)</h2>
-          <pre class="out">-</pre>
-        </div>
-        <div class="test pending" id="test3">
-          <h2>3. GET /api/audit (last 7 days)</h2>
-          <pre class="out">-</pre>
-        </div>
-        <div class="test pending" id="test4">
-          <h2>4. GET /api/audit (with actorId from /me)</h2>
-          <pre class="out">-</pre>
-        </div>
-      `;
+    results: dict = {}
+    now_ms = int(time.time() * 1000)
+    week_ago_ms = now_ms - 7 * 24 * 60 * 60 * 1000
+    audit_params = {"startTimestamp": week_ago_ms, "endTimestamp": now_ms, "limit": 10}
 
-      let meData = null;
-      await run('test1', async () => {
-        const res = await fetch(api + '/me');
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
-        meData = data;
-        return data;
-      });
+    try:
+        headers = await get_auth_headers(request)
+        headers["Accept"] = "application/json"
+    except Exception as e:
+        return JSONResponse({"error": str(e), "results": {}}, status_code=502)
 
-      await run('test2', async () => {
-        const res = await fetch(api + '/users');
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
-        return Array.isArray(data) ? data : (data.data || data.users || data);
-      });
+    # 1. GET /me
+    try:
+        r = requests.get(f"{base.rstrip('/')}/v4/users/self", headers=headers, timeout=30)
+        data = r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text
+        results["me"] = {"ok": r.ok, "status": r.status_code, "data": data}
+    except Exception as e:
+        results["me"] = {"ok": False, "error": str(e)}
 
-      const now = Date.now();
-      const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-      await run('test3', async () => {
-        const url = api + '/audit?startTimestamp=' + weekAgo + '&endTimestamp=' + now + '&limit=10';
-        const res = await fetch(url);
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
-        return Array.isArray(data) ? data : (data.data || data.events || data);
-      });
+    # 2. GET /users
+    try:
+        r = requests.get(f"{base.rstrip('/')}/v4/users", headers=headers, timeout=30)
+        data = r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text
+        results["users"] = {"ok": r.ok, "status": r.status_code, "data": data}
+    except Exception as e:
+        results["users"] = {"ok": False, "error": str(e)}
 
-      const actorId = meData?.id || meData?.userId || meData?.userName;
-      await run('test4', async () => {
-        let url = api + '/audit?startTimestamp=' + weekAgo + '&endTimestamp=' + now + '&limit=10';
-        if (actorId) url += '&actorId=' + encodeURIComponent(actorId);
-        const res = await fetch(url);
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
-        return Array.isArray(data) ? data : (data.data || data.events || data);
-      });
-    }
-    window.addEventListener('DOMContentLoaded', function() { runAll(); });
-  </script>
-</body>
-</html>
-"""
+    # 3. GET /audit (no actorId)
+    path = AUDIT_API_PATH if AUDIT_API_PATH.startswith("/") else f"/{AUDIT_API_PATH}"
+    audit_url = f"{base.rstrip('/')}{path}"
+    try:
+        r = requests.get(audit_url, params=audit_params, headers=headers, timeout=30)
+        data = r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text
+        results["audit"] = {"ok": r.ok, "status": r.status_code, "params": audit_params, "data": data}
+    except Exception as e:
+        results["audit"] = {"ok": False, "params": audit_params, "error": str(e)}
 
+    # 4. GET /audit (with actorId from /me)
+    me_data = results.get("me", {}).get("data")
+    actor_id = None
+    if isinstance(me_data, dict):
+        actor_id = me_data.get("id") or me_data.get("userId") or me_data.get("userName")
+    if actor_id:
+        try:
+            params_with_actor = {**audit_params, "actorId": actor_id}
+            r = requests.get(audit_url, params=params_with_actor, headers=headers, timeout=30)
+            data = r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text
+            results["audit_with_actorId"] = {
+                "ok": r.ok,
+                "status": r.status_code,
+                "actorId": actor_id,
+                "params": params_with_actor,
+                "data": data,
+            }
+        except Exception as e:
+            results["audit_with_actorId"] = {"ok": False, "actorId": actor_id, "error": str(e)}
+    else:
+        results["audit_with_actorId"] = {"ok": False, "error": "No actorId from /me", "me_data": me_data}
 
-@app.get("/test", response_class=HTMLResponse)
-async def test_page():
-    """Simple API test page – run in Domino and report results to debug the main app."""
-    return _TEST_HTML
+    return JSONResponse({"results": results})
 
 
 @app.get("/api/users")

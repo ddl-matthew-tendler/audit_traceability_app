@@ -99,7 +99,7 @@ Frontend not built. Run: npm run build and commit client/dist
 **Cause:** Domino Cloud's Platform API (`/auditevents`) may require a target user when the caller is not an admin. The API expects an `actorId` (or similar) to scope the query.
 
 **Fix:** The app now automatically passes the current user's ID when "All users" is selected. If you still see this error:
-- Ensure `/api/me` returns valid user data (visit `/test` to verify).
+- Ensure `/api/me` returns valid user data (GET `/api/test` to verify).
 - Contact your Domino admin – the Audit Trail API may be restricted to admins or require a different path.
 
 ---
