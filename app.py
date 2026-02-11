@@ -124,13 +124,15 @@ _TEST_HTML = """
     .fail { border-color: #c20a29; background: #fff0f2; }
     .pending { border-color: #ccc; background: #fafafa; }
     pre { margin: 0.5rem 0; padding: 0.5rem; background: #f5f5f5; overflow-x: auto; font-size: 12px; }
-    button { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+    button { padding: 12px 24px; font-size: 1.1rem; cursor: pointer; background: #543FDE; color: white; border: none; border-radius: 6px; }
+    button:hover { background: #3B23D1; }
   </style>
 </head>
 <body>
   <h1>API Test – Traceability Explorer</h1>
   <p>Run these tests and report back any errors. Same APIs as the main app.</p>
-  <button onclick="runAll()">Run All Tests</button>
+  <p><strong>Click the button below, or tests will run automatically when the page loads.</strong></p>
+  <button type="button" id="run-btn" onclick="runAll()">Run All Tests</button>
   <div id="results"></div>
   <script>
     const api = new URL('./api', window.location.href).pathname;
@@ -206,6 +208,7 @@ _TEST_HTML = """
         return Array.isArray(data) ? data : (data.data || data.events || data);
       });
     }
+    window.addEventListener('DOMContentLoaded', function() { runAll(); });
   </script>
 </body>
 </html>
