@@ -120,6 +120,8 @@ npm run build
 
 The app listens on `0.0.0.0:8888`. When running inside Domino, set `DOMINO_API_HOST`; the server uses `http://localhost:8899/access-token` for auth. For local dev without Domino, use `API_KEY_OVERRIDE` with a Domino API key.
 
+**Optional:** Default is `/auditevents` (Domino Platform API). For on-prem, set `AUDIT_API_PATH=/api/audittrail/v1/auditevents`. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
 ### Deploy on Domino (e.g. se-demo.domino.tech)
 
 1. **Build the client** (`npm run build`) and **commit `client/dist`** before pushing. Domino uses Python-only environments, so the frontend must be pre-built.

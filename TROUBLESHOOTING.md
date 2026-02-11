@@ -92,7 +92,25 @@ Frontend not built. Run: npm run build and commit client/dist
 
 ---
 
-### 6. Auth errors (401/403) when calling Domino APIs
+### 6. `Public api endpoint '/api/audittrail/v1/auditevents' not found`
+
+**Symptoms:** App loads, but shows "Unable to load audit events" with the above message.
+
+**Cause:** Domino Cloud (or some deployments) may not expose the Audit Trail API through the same public API gateway. The API may be admin-only, on a different plan, or under a different path.
+
+**Fix:**
+
+1. **Check your Domino version and plan** – The Unified Audit Trail is available in Domino 6.0+. Access may require SysAdmin or GovernanceAdmin role ([docs](https://docs.dominodatalab.com/en/6.0/admin_guide/85fbb1/domino-unified-audit-trail/)).
+
+2. **Try an alternate path** – Set the `AUDIT_API_PATH` environment variable in your Domino app/run config:
+   - **Domino Cloud (Platform API):** `/auditevents` (default) – see [Platform API reference](https://docs.dominodatalab.com/en/latest/api_guide/8c929e/domino-platform-api-reference/#_fetchAuditEvents)
+   - **On-prem (Admin Guide):** `/api/audittrail/v1/auditevents`
+
+3. **Contact your Domino admin** – Confirm that the Audit Trail API is enabled and what path/credentials are required.
+
+---
+
+### 7. Auth errors (401/403) when calling Domino APIs
 
 **Logs:**
 ```
@@ -108,7 +126,7 @@ or API responses with 401/403.
 
 ---
 
-### 7. Client-side runtime errors (React crash)
+### 8. Client-side runtime errors (React crash)
 
 **Symptoms:** Blank page with errors in the browser console (e.g. "Cannot read property of undefined").
 
@@ -131,6 +149,7 @@ On startup, the app logs to stdout:
   client/dist/assets exists: True
   index.html exists: True
   DOMINO_API_HOST set: True
+  AUDIT_API_PATH: /auditevents
   DOMINO_API_HOST: https://...
 === Ready for requests ===
 ```
