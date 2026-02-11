@@ -99,8 +99,10 @@ This repo includes a **Traceability Explorer** app that visualizes Domino Audit 
 
 ### Stack
 
-- **Backend:** Node.js + Express (proxies Domino Audit Trail and v4 users APIs with auth)
+- **Backend:** Python FastAPI (proxies Domino Audit Trail and v4 users APIs with auth)
 - **Frontend:** React 18, Vite, Tailwind CSS, React Flow, Zustand, React Query, date-fns
+
+Domino environments are Python-only, so the server runs with uvicorn instead of Node.js.
 
 ### Build and run
 
@@ -108,19 +110,19 @@ This repo includes a **Traceability Explorer** app that visualizes Domino Audit 
 # Install dependencies (root + client)
 npm install
 
-# Build the client
+# Build the client (required before running)
 npm run build
 
 # Start the server (serves client/dist and /api/*)
 ./app.sh
-# or: node server/index.js
+# or: uvicorn app:app --host 0.0.0.0 --port 8888
 ```
 
 The app listens on `0.0.0.0:8888`. When running inside Domino, set `DOMINO_API_HOST`; the server uses `http://localhost:8899/access-token` for auth. For local dev without Domino, use `API_KEY_OVERRIDE` with a Domino API key.
 
 ### Deploy on Domino (e.g. se-demo.domino.tech)
 
-1. Build the client (`npm run build`) and commit `client/dist` or ensure the build runs in your deploy pipeline.
+1. **Build the client** (`npm run build`) and **commit `client/dist`** before pushing. Domino uses Python-only environments, so the frontend must be pre-built.
 2. Use `app.sh` as the app start command; the app binds to port 8888 and uses relative URLs for API and assets.
 
 ## API Reference

@@ -50,6 +50,8 @@ env/
 
 # Node.js
 node_modules/
+# Allow client/dist for pre-built frontend (Domino runs Python-only env)
+!client/dist/
 npm-debug.log
 yarn-error.log
 .npm
