@@ -1,7 +1,8 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import type { AuditEvent } from '../types';
 
-const API = '/api';
+// Relative API base for Domino - proxy may serve app at subpath
+const API = './api';
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -26,7 +27,7 @@ export function useAuditEvents(params: AuditParams | null, autoRefresh: boolean)
     queryKey: ['audit', params],
     queryFn: async () => {
       if (!params) return [];
-      const url = new URL(API + '/audit', window.location.origin);
+      const url = new URL(API + '/audit', window.location.href);
       url.searchParams.set('startTimestamp', String(params.startTimestamp));
       url.searchParams.set('endTimestamp', String(params.endTimestamp));
       if (params.actorId) url.searchParams.set('actorId', params.actorId);

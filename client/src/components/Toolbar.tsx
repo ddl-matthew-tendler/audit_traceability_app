@@ -57,7 +57,7 @@ export function Toolbar({
     <>
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-domino-border bg-[#2E2E38] px-4 py-2 text-white">
         <div className="flex items-center gap-4">
-          <img src="/domino-logo.svg" alt="" className="h-8" />
+          <img src="./domino-logo.svg" alt="" className="h-8" />
           <span className="text-lg font-medium">Traceability Explorer</span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
