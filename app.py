@@ -10,7 +10,7 @@ from pathlib import Path
 
 import requests
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 TOKEN_URL = "http://localhost:8899/access-token"
@@ -106,6 +106,116 @@ async def audit(request: Request):
 async def health():
     """Lightweight health check for Domino readiness probes. Returns immediately."""
     return {"status": "ok"}
+
+
+# Inline test page HTML - minimal API tester for debugging
+_TEST_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>API Test - Traceability</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; }
+    .test { margin: 1rem 0; padding: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+    .test h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+    .ok { border-color: #28a464; background: #f0fff4; }
+    .fail { border-color: #c20a29; background: #fff0f2; }
+    .pending { border-color: #ccc; background: #fafafa; }
+    pre { margin: 0.5rem 0; padding: 0.5rem; background: #f5f5f5; overflow-x: auto; font-size: 12px; }
+    button { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>API Test – Traceability Explorer</h1>
+  <p>Run these tests and report back any errors. Same APIs as the main app.</p>
+  <button onclick="runAll()">Run All Tests</button>
+  <div id="results"></div>
+  <script>
+    const api = new URL('./api', window.location.href).pathname;
+
+    async function run(name, fn) {
+      const div = document.getElementById(name);
+      div.className = 'test pending';
+      div.querySelector('.out').textContent = 'Running...';
+      try {
+        const result = await fn();
+        div.className = 'test ok';
+        div.querySelector('.out').textContent = JSON.stringify(result, null, 2);
+      } catch (e) {
+        div.className = 'test fail';
+        div.querySelector('.out').textContent = e.message || String(e);
+      }
+    }
+
+    async function runAll() {
+      const r = document.getElementById('results');
+      r.innerHTML = `
+        <div class="test pending" id="test1">
+          <h2>1. GET /api/me (current user)</h2>
+          <pre class="out">-</pre>
+        </div>
+        <div class="test pending" id="test2">
+          <h2>2. GET /api/users (list users)</h2>
+          <pre class="out">-</pre>
+        </div>
+        <div class="test pending" id="test3">
+          <h2>3. GET /api/audit (last 7 days)</h2>
+          <pre class="out">-</pre>
+        </div>
+        <div class="test pending" id="test4">
+          <h2>4. GET /api/audit (with actorId from /me)</h2>
+          <pre class="out">-</pre>
+        </div>
+      `;
+
+      let meData = null;
+      await run('test1', async () => {
+        const res = await fetch(api + '/me');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
+        meData = data;
+        return data;
+      });
+
+      await run('test2', async () => {
+        const res = await fetch(api + '/users');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
+        return Array.isArray(data) ? data : (data.data || data.users || data);
+      });
+
+      const now = Date.now();
+      const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+      await run('test3', async () => {
+        const url = api + '/audit?startTimestamp=' + weekAgo + '&endTimestamp=' + now + '&limit=10';
+        const res = await fetch(url);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
+        return Array.isArray(data) ? data : (data.data || data.events || data);
+      });
+
+      const actorId = meData?.id || meData?.userId || meData?.userName;
+      await run('test4', async () => {
+        let url = api + '/audit?startTimestamp=' + weekAgo + '&endTimestamp=' + now + '&limit=10';
+        if (actorId) url += '&actorId=' + encodeURIComponent(actorId);
+        const res = await fetch(url);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(JSON.stringify(data, null, 2));
+        return Array.isArray(data) ? data : (data.data || data.events || data);
+      });
+    }
+  </script>
+</body>
+</html>
+"""
+
+
+@app.get("/test", response_class=HTMLResponse)
+async def test_page():
+    """Simple API test page – run in Domino and report results to debug the main app."""
+    return _TEST_HTML
 
 
 @app.get("/api/users")

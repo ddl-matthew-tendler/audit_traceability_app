@@ -129,6 +129,12 @@ The app listens on `0.0.0.0:8888`. When running inside Domino, set `DOMINO_API_H
 
 **If the app fails to load or deploy**, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common failure modes and how to diagnose them from Domino logs.
 
+### API test page
+
+To test the APIs without building the frontend, use **`./test_app.sh`** as the app start command in Domino. Then open **`/test`** in your browser to run the tests and report results.
+
+Alternatively, when the full app is running, open **`/test`** to run the same API tests.
+
 ## API Reference
 
 - **[swagger.json](swagger.json)** - Main API documentation
