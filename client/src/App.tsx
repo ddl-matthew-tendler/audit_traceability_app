@@ -24,7 +24,8 @@ function AppContent() {
   const [timeRange, setTimeRange] = useState(getDefaultTimeRange);
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
 
-  const { viewMode, searchQuery, categoryFilters, projectFilter, targetIdFilter, highContrast } = useAppStore();
+  const { viewMode, searchQuery, categoryFilters, projectFilter, targetIdFilter, highContrast, useMockData } =
+    useAppStore();
 
   const params = useMemo(
     () => ({
@@ -36,7 +37,8 @@ function AppContent() {
 
   const { data: events = [], isLoading, isFetching, isError, error, refetch, dataUpdatedAt } = useAuditEvents(
     params,
-    useAppStore.getState().autoRefresh
+    useAppStore.getState().autoRefresh,
+    useMockData
   );
 
   const categoryFilterFn = useCallback(

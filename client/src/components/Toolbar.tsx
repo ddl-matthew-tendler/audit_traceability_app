@@ -42,6 +42,8 @@ export function Toolbar({
     setAutoRefresh,
     highContrast,
     setHighContrast,
+    useMockData,
+    setUseMockData,
   } = useAppStore();
 
   return (
@@ -118,9 +120,19 @@ export function Toolbar({
         <label className="flex items-center gap-1 text-sm">
           <input
             type="checkbox"
+            checked={useMockData}
+            onChange={(e) => setUseMockData(e.target.checked)}
+            aria-label="Use mock data from CSV"
+          />
+          Mock data
+        </label>
+        <label className="flex items-center gap-1 text-sm">
+          <input
+            type="checkbox"
             checked={autoRefresh}
             onChange={(e) => setAutoRefresh(e.target.checked)}
             aria-label="Auto-refresh every 30 seconds"
+            disabled={useMockData}
           />
           Auto-refresh
         </label>

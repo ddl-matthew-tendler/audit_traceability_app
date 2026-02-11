@@ -22,24 +22,33 @@ export interface AuditParams {
   offset?: number;
 }
 
-export function useAuditEvents(params: AuditParams | null, autoRefresh: boolean): UseQueryResult<AuditEvent[]> {
+export function useAuditEvents(
+  params: AuditParams | null,
+  autoRefresh: boolean,
+  useMockData: boolean
+): UseQueryResult<AuditEvent[]> {
   return useQuery({
-    queryKey: ['audit', params],
+    queryKey: ['audit', params, useMockData],
     queryFn: async () => {
       if (!params) return [];
-      const url = new URL(API + '/audit', window.location.href);
-      url.searchParams.set('startTimestamp', String(params.startTimestamp));
-      url.searchParams.set('endTimestamp', String(params.endTimestamp));
-      if (params.actorId) url.searchParams.set('actorId', params.actorId);
-      if (params.actorName) url.searchParams.set('actorName', params.actorName);
-      if (params.limit != null) url.searchParams.set('limit', String(params.limit));
-      if (params.offset != null) url.searchParams.set('offset', String(params.offset));
+      const base = useMockData ? API + '/audit/mock' : API + '/audit';
+      const url = new URL(base, window.location.href);
+      if (useMockData) {
+        if (params.limit != null) url.searchParams.set('limit', String(params.limit));
+      } else {
+        url.searchParams.set('startTimestamp', String(params.startTimestamp));
+        url.searchParams.set('endTimestamp', String(params.endTimestamp));
+        if (params.actorId) url.searchParams.set('actorId', params.actorId);
+        if (params.actorName) url.searchParams.set('actorName', params.actorName);
+        if (params.limit != null) url.searchParams.set('limit', String(params.limit));
+        if (params.offset != null) url.searchParams.set('offset', String(params.offset));
+      }
       const data = await fetchJson<AuditEvent[] | { data?: AuditEvent[] }>(url.toString());
       if (Array.isArray(data)) return data;
       return (data as { data?: AuditEvent[] }).data ?? [];
     },
     enabled: params != null,
-    refetchInterval: autoRefresh ? 30_000 : false,
+    refetchInterval: useMockData ? false : (autoRefresh ? 30_000 : false),
   });
 }
 

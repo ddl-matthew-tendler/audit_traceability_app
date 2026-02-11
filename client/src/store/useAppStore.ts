@@ -22,6 +22,8 @@ interface AppState {
   setHighContrast: (v: boolean) => void;
   connectedComponentFilter: boolean;
   setConnectedComponentFilter: (v: boolean) => void;
+  useMockData: boolean;
+  setUseMockData: (v: boolean) => void;
 }
 
 const defaultCategories: Record<string, boolean> = {
@@ -60,4 +62,6 @@ export const useAppStore = create<AppState>((set) => ({
   connectedComponentFilter: false,
   setConnectedComponentFilter: (connectedComponentFilter) =>
     set({ connectedComponentFilter }),
+  useMockData: false,
+  setUseMockData: (useMockData) => set({ useMockData }),
 }));

@@ -4,6 +4,7 @@ Traceability Explorer - FastAPI server for Domino deployment.
 - Proxies /api/audit, /api/users, /api/me to Domino with auth
 - Bind 0.0.0.0:8888 for Domino
 """
+import csv
 import os
 import sys
 from pathlib import Path
@@ -23,6 +24,7 @@ app = FastAPI()
 
 # Static files from client/dist (built by: npm run build)
 DIST_PATH = Path(__file__).parent / "client" / "dist"
+MOCK_CSV_PATH = Path(__file__).parent / "domino_audit_trail_20260211_1607.csv"
 
 
 def _log(msg: str) -> None:
@@ -107,6 +109,56 @@ def _normalize_audit_event(raw: dict) -> dict:
         "withinProjectName": context_in.get("name") or raw.get("withinProjectName"),
         "metadata": raw.get("metadata") or {},
     }
+
+
+def _load_mock_events(limit: int = 100) -> list[dict]:
+    """Load audit events from CSV mock file. Returns list of normalized events."""
+    if not MOCK_CSV_PATH.exists():
+        return []
+    events: list[dict] = []
+    try:
+        with open(MOCK_CSV_PATH, encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            for i, row in enumerate(reader):
+                if i >= limit:
+                    break
+                dt_str = row.get("DATE & TIME", "").strip()
+                ts = None
+                if dt_str:
+                    try:
+                        from datetime import datetime
+                        dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
+                        ts = int(dt.timestamp() * 1000)
+                    except Exception:
+                        ts = None
+                events.append({
+                    "id": f"mock-{i}",
+                    "event": row.get("EVENT", "").strip(),
+                    "timestamp": ts,
+                    "actorId": row.get("USER NAME", "").strip(),
+                    "actorName": row.get("USER NAME", "").strip(),
+                    "targetId": row.get("TARGET NAME", "").strip() or None,
+                    "targetName": row.get("TARGET NAME", "").strip() or None,
+                    "withinProjectId": row.get("PROJECT NAME", "").strip() or None,
+                    "withinProjectName": row.get("PROJECT NAME", "").strip() or None,
+                    "metadata": {},
+                })
+    except Exception as e:
+        _log(f"Mock CSV load error: {e}")
+    return events
+
+
+@app.get("/api/audit/mock")
+async def audit_mock(request: Request):
+    """Serve mock audit events from CSV. Query: limit (default 100)."""
+    limit = 100
+    if "limit" in request.query_params:
+        try:
+            limit = min(int(request.query_params["limit"]), 10_000)
+        except ValueError:
+            pass
+    events = _load_mock_events(limit=limit)
+    return JSONResponse(events)
 
 
 @app.get("/api/audit")
