@@ -120,7 +120,7 @@ def _load_mock_events(limit: int = 100) -> list[dict]:
         with open(MOCK_CSV_PATH, encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             for i, row in enumerate(reader):
-                if i >= limit:
+                if limit > 0 and i >= limit:
                     break
                 dt_str = row.get("DATE & TIME", "").strip()
                 ts = None
@@ -150,11 +150,11 @@ def _load_mock_events(limit: int = 100) -> list[dict]:
 
 @app.get("/api/audit/mock")
 async def audit_mock(request: Request):
-    """Serve mock audit events from CSV. Query: limit (default 100)."""
-    limit = 100
+    """Serve mock audit events from CSV. Query: limit (default all, max 100_000)."""
+    limit = 0  # 0 = no limit, load all
     if "limit" in request.query_params:
         try:
-            limit = min(int(request.query_params["limit"]), 10_000)
+            limit = min(int(request.query_params["limit"]), 100_000)
         except ValueError:
             pass
     events = _load_mock_events(limit=limit)

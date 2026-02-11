@@ -10,7 +10,7 @@ import {
   isAfter,
 } from 'date-fns';
 
-export type TimeRangePreset = 'today' | 'last24h' | 'last7d' | 'last30d' | 'custom';
+export type TimeRangePreset = 'all' | 'today' | 'last24h' | 'last7d' | 'last30d' | 'custom';
 
 export interface TimeRange {
   start: Date;
@@ -19,6 +19,11 @@ export interface TimeRange {
 }
 
 const PRESETS: { id: TimeRangePreset; label: string; getValue: () => { start: Date; end: Date } }[] = [
+  {
+    id: 'all',
+    label: 'All time',
+    getValue: () => ({ start: subDays(new Date(), 365 * 2), end: new Date() }),
+  },
   { id: 'today', label: 'Today', getValue: () => ({ start: startOfToday(), end: endOfToday() }) },
   {
     id: 'last24h',
@@ -162,8 +167,8 @@ export function TimeRangePicker({ value, onChange, disabled }: TimeRangePickerPr
 
 export function getDefaultTimeRange(): TimeRange {
   const end = new Date();
-  const start = subDays(end, 7);
-  return { start, end, preset: 'last7d' };
+  const start = subDays(end, 365 * 2);
+  return { start, end, preset: 'all' };
 }
 
 export function timeRangeToParams(range: TimeRange): { startTimestamp: number; endTimestamp: number } {

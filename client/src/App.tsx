@@ -1,12 +1,15 @@
 import { useMemo, useState, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toolbar } from './components/Toolbar';
-import { DAGCanvas } from './components/DAGCanvas';
 import { TimelineView } from './components/TimelineView';
 import { TableView } from './components/TableView';
+import { UserJourneyView } from './components/UserJourneyView';
+import { ActivityByProjectView } from './components/ActivityByProjectView';
+import { EventTypesView } from './components/EventTypesView';
 import { DetailPanel } from './components/DetailPanel';
 import { useAppStore } from './store/useAppStore';
-import { useAuditEvents } from './api/hooks';
+import { useAuditEvents, useUsers, useCurrentUser } from './api/hooks';
+import type { UserOption } from './components/UserFilter';
 import { getDefaultTimeRange, timeRangeToParams } from './components/TimeRangePicker';
 import type { AuditEvent } from './types';
 
@@ -27,12 +30,14 @@ function AppContent() {
   const { viewMode, searchQuery, categoryFilters, projectFilter, targetIdFilter, highContrast, useMockData } =
     useAppStore();
 
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const params = useMemo(
     () => ({
       ...timeRangeToParams(timeRange),
-      limit: 100,
+      limit: useMockData ? 0 : 10_000,
+      ...(selectedUserIds.length === 1 ? { actorId: selectedUserIds[0] } : {}),
     }),
-    [timeRange]
+    [timeRange, selectedUserIds, useMockData]
   );
 
   const { data: events = [], isLoading, isFetching, isError, error, refetch, dataUpdatedAt } = useAuditEvents(
@@ -48,6 +53,12 @@ function AppContent() {
 
   const filtered = useMemo(() => {
     let list = events;
+    if (selectedUserIds.length > 1) {
+      list = list.filter((e) => {
+        const id = e.actorId ?? e.actorName;
+        return id && selectedUserIds.includes(id);
+      });
+    }
     if (projectFilter) {
       list = list.filter(
         (e) => e.withinProjectId === projectFilter || e.withinProjectName === projectFilter
@@ -68,7 +79,7 @@ function AppContent() {
       });
     }
     return list;
-  }, [events, projectFilter, targetIdFilter, searchQuery]);
+  }, [events, selectedUserIds, projectFilter, targetIdFilter, searchQuery]);
 
   const projects = useMemo(() => {
     const set = new Set<string>();
@@ -78,6 +89,23 @@ function AppContent() {
     });
     return Array.from(set).sort();
   }, [events]);
+
+  const usersFromEvents = useMemo((): UserOption[] => {
+    const set = new Map<string, string>();
+    events.forEach((e) => {
+      const id = e.actorId ?? e.actorName;
+      if (id) set.set(id, e.actorName ?? e.actorId ?? id);
+    });
+    return Array.from(set.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [events]);
+
+  const { data: apiUsers = [], isLoading: usersLoading } = useUsers();
+  const { data: currentUser } = useCurrentUser();
+  const userOptions: UserOption[] = useMockData
+    ? usersFromEvents
+    : apiUsers.map((u) => ({ id: (u.id ?? u.userName ?? '') as string, label: (u.userName ?? u.id ?? '') as string }));
 
   const selectedEventId = selectedEvent
     ? eventId(selectedEvent, filtered.indexOf(selectedEvent))
@@ -97,6 +125,11 @@ function AppContent() {
       <Toolbar
         timeRange={timeRange}
         onTimeRangeChange={setTimeRange}
+        selectedUserIds={selectedUserIds}
+        onSelectedUserIdsChange={setSelectedUserIds}
+        users={userOptions}
+        currentUser={currentUser ?? null}
+        usersLoading={usersLoading && !useMockData}
         onRefresh={() => refetch()}
         lastUpdated={dataUpdatedAt ? new Date(dataUpdatedAt) : null}
         eventCount={filtered.length}
@@ -143,12 +176,12 @@ function AppContent() {
                 Clear search, category, or project filters to see more events.
               </p>
             </div>
-          ) : viewMode === 'dag' ? (
-            <DAGCanvas
+          ) : viewMode === 'table' ? (
+            <TableView
               events={filtered}
-              onNodeSelect={handleNodeSelect}
+              onSelectEvent={handleNodeSelect}
               selectedEventId={selectedEventId}
-              onShowByUser={() => {}}
+              categoryFilter={categoryFilterFn}
             />
           ) : viewMode === 'timeline' ? (
             <TimelineView
@@ -157,13 +190,18 @@ function AppContent() {
               selectedEventId={selectedEventId}
               categoryFilter={categoryFilterFn}
             />
-          ) : (
-            <TableView
+          ) : viewMode === 'userJourney' ? (
+            <UserJourneyView
               events={filtered}
               onSelectEvent={handleNodeSelect}
               selectedEventId={selectedEventId}
               categoryFilter={categoryFilterFn}
+              selectedUserIds={selectedUserIds}
             />
+          ) : viewMode === 'activityByProject' ? (
+            <ActivityByProjectView events={filtered} categoryFilter={categoryFilterFn} />
+          ) : (
+            <EventTypesView events={filtered} categoryFilter={categoryFilterFn} />
           )}
         </div>
 
@@ -171,14 +209,6 @@ function AppContent() {
           <DetailPanel event={selectedEvent} onClose={handleClosePanel} />
         )}
       </main>
-
-      <footer className="flex items-center justify-between border-t border-domino-border bg-domino-container px-4 py-2 text-sm text-domino-text-body">
-        <span>Showing {filtered.length} events</span>
-        <span>
-          Last updated:{' '}
-          {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '—'}
-        </span>
-      </footer>
 
       <div
         className="sr-only"

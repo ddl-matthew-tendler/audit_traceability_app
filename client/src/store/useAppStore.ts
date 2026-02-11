@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ViewMode = 'dag' | 'timeline' | 'table';
+export type ViewMode = 'table' | 'timeline' | 'userJourney' | 'activityByProject' | 'eventTypes';
 
 interface AppState {
   viewMode: ViewMode;
