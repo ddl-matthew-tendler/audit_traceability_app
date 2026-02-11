@@ -35,7 +35,7 @@ export const NODE_COLORS: Record<EventCategory, string> = {
   default: '#6B7280',
 };
 
-export type ViewMode = 'table' | 'timeline' | 'userJourney' | 'activityByProject' | 'eventTypes';
+export type ViewMode = 'overview' | 'usageOverTime' | 'activityByProject' | 'eventTypes';
 
 export interface TimeRangePreset {
   label: string;

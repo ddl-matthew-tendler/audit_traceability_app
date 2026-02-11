@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type ViewMode = 'table' | 'timeline' | 'userJourney' | 'activityByProject' | 'eventTypes';
+export type ViewMode = 'overview' | 'usageOverTime' | 'activityByProject' | 'eventTypes';
 
 interface AppState {
   viewMode: ViewMode;
@@ -38,7 +38,7 @@ const defaultCategories: Record<string, boolean> = {
 };
 
 export const useAppStore = create<AppState>((set) => ({
-  viewMode: 'table',
+  viewMode: 'overview',
   setViewMode: (viewMode) => set({ viewMode }),
   selectedEventId: null,
   setSelectedEventId: (selectedEventId) => set({ selectedEventId }),
@@ -62,6 +62,6 @@ export const useAppStore = create<AppState>((set) => ({
   connectedComponentFilter: false,
   setConnectedComponentFilter: (connectedComponentFilter) =>
     set({ connectedComponentFilter }),
-  useMockData: false,
+  useMockData: true,
   setUseMockData: (useMockData) => set({ useMockData }),
 }));
