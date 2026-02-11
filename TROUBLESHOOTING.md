@@ -92,7 +92,19 @@ Frontend not built. Run: npm run build and commit client/dist
 
 ---
 
-### 6. `Public api endpoint '/api/audittrail/v1/auditevents' not found`
+### 6a. `No target user for user auditevents`
+
+**Symptoms:** App loads, but shows "Unable to load audit events" with the above message.
+
+**Cause:** Domino Cloud's Platform API (`/auditevents`) may require a target user when the caller is not an admin. The API expects an `actorId` (or similar) to scope the query.
+
+**Fix:** The app now automatically passes the current user's ID when "All users" is selected. If you still see this error:
+- Ensure `/api/me` returns valid user data (visit `/test` to verify).
+- Contact your Domino admin – the Audit Trail API may be restricted to admins or require a different path.
+
+---
+
+### 6b. `Public api endpoint '/api/audittrail/v1/auditevents' not found`
 
 **Symptoms:** App loads, but shows "Unable to load audit events" with the above message.
 

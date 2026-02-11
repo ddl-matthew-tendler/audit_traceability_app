@@ -6,7 +6,7 @@ import { TimelineView } from './components/TimelineView';
 import { TableView } from './components/TableView';
 import { DetailPanel } from './components/DetailPanel';
 import { useAppStore } from './store/useAppStore';
-import { useAuditEvents } from './api/hooks';
+import { useAuditEvents, useCurrentUser } from './api/hooks';
 import { getDefaultTimeRange, timeRangeToParams } from './components/TimeRangePicker';
 import type { AuditEvent } from './types';
 
@@ -26,15 +26,20 @@ function AppContent() {
   const [selectedEvent, setSelectedEvent] = useState<AuditEvent | null>(null);
 
   const { viewMode, searchQuery, categoryFilters, projectFilter, targetIdFilter, highContrast } = useAppStore();
+  const { data: currentUser } = useCurrentUser();
 
-  const params = useMemo(
-    () => ({
-      ...timeRangeToParams(timeRange),
-      limit: 2000,
-      ...(selectedUserIds.length === 1 ? { actorId: selectedUserIds[0] } : {}),
-    }),
-    [timeRange, selectedUserIds]
-  );
+  const params = useMemo(() => {
+    const base = { ...timeRangeToParams(timeRange), limit: 2000 };
+    if (selectedUserIds.length === 1) {
+      return { ...base, actorId: selectedUserIds[0] };
+    }
+    const currentId =
+      currentUser?.id ?? currentUser?.userId ?? currentUser?.userName;
+    if (typeof currentId === 'string' && currentId) {
+      return { ...base, actorId: currentId };
+    }
+    return base;
+  }, [timeRange, selectedUserIds, currentUser]);
 
   const { data: events = [], isLoading, isFetching, isError, error, refetch, dataUpdatedAt } = useAuditEvents(
     params,
