@@ -127,40 +127,64 @@ export function UniqueUsersByProjectView({ events }: UniqueUsersByProjectViewPro
               .map((p, i) => `${i === 0 ? 'M' : 'L'} ${xScale(p.day)} ${yScale(p.count)}`)
               .join(' ');
             return (
-              <path
-                key={s.project}
-                d={pathD}
-                fill="none"
-                stroke={color}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <g key={s.project}>
+                {/* Invisible wide path for hover target */}
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={20}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ cursor: 'help' }}
+                >
+                  <title>{`${s.project}: ${format(s.points[0]?.day ?? 0, 'M/d')} — ${format(s.points[s.points.length - 1]?.day ?? 0, 'M/d')}`}</title>
+                </path>
+                {/* Visible line */}
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ pointerEvents: 'none' }}
+                />
+              </g>
             );
           })}
           {series.map((s, idx) => {
             const maxUsers = Math.max(...s.points.map((p) => p.count), 0);
             const totalDays = s.points.filter((p) => p.count > 0).length;
+            const legendY = margin.top + idx * 18;
             return (
               <g key={s.project}>
                 <line
                   x1={width - margin.right + 8}
-                  y1={margin.top + idx * 18 + 5}
+                  y1={legendY + 5}
                   x2={width - margin.right + 18}
-                  y2={margin.top + idx * 18 + 5}
+                  y2={legendY + 5}
                   stroke={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
                   strokeWidth={2}
-                  style={{ cursor: 'help' }}
-                >
-                  <title>{`${s.project}: up to ${maxUsers} users, activity on ${totalDays} days`}</title>
-                </line>
+                />
                 <text
                   x={width - margin.right + 22}
-                  y={margin.top + idx * 18 + 10}
+                  y={legendY + 10}
                   className="fill-[#3F4547] text-[11px]"
                 >
                   {s.project.length > 20 ? s.project.slice(0, 18) + '…' : s.project}
                 </text>
+                {/* Invisible rect on top for easier hover */}
+                <rect
+                  x={width - margin.right}
+                  y={legendY - 2}
+                  width={120}
+                  height={16}
+                  fill="transparent"
+                  style={{ cursor: 'help' }}
+                >
+                  <title>{`${s.project}: up to ${maxUsers} users, activity on ${totalDays} days`}</title>
+                </rect>
               </g>
             );
           })}

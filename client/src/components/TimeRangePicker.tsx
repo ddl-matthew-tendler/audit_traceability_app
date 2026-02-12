@@ -169,8 +169,8 @@ export function TimeRangePicker({ value, onChange, disabled }: TimeRangePickerPr
 
 export function getDefaultTimeRange(): TimeRange {
   const end = new Date();
-  const start = subDays(end, 365 * 2);
-  return { start, end, preset: 'all' };
+  const start = subDays(end, 7);
+  return { start, end, preset: 'last7d' };
 }
 
 export function timeRangeToParams(range: TimeRange): { startTimestamp: number; endTimestamp: number } {

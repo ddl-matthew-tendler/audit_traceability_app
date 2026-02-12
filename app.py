@@ -150,14 +150,23 @@ def _load_mock_events(limit: int = 100) -> list[dict]:
 
 @app.get("/api/audit/mock")
 async def audit_mock(request: Request):
-    """Serve mock audit events from CSV. Query: limit (default all, max 100_000)."""
+    """Serve mock audit events from CSV. Query: startTimestamp, endTimestamp (filter by time), limit (default all, max 100_000)."""
     limit = 0  # 0 = no limit, load all
     if "limit" in request.query_params:
         try:
             limit = min(int(request.query_params["limit"]), 100_000)
         except ValueError:
             pass
+    start_ts = request.query_params.get("startTimestamp")
+    end_ts = request.query_params.get("endTimestamp")
     events = _load_mock_events(limit=limit)
+    if start_ts is not None and end_ts is not None:
+        try:
+            start_ms = int(start_ts)
+            end_ms = int(end_ts)
+            events = [e for e in events if e.get("timestamp") and start_ms <= e["timestamp"] <= end_ms]
+        except ValueError:
+            pass
     return JSONResponse(events)
 
 

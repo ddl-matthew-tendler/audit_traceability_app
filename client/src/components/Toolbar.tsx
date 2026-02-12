@@ -46,10 +46,10 @@ export function Toolbar({
               type="checkbox"
               checked={useMockData}
               onChange={(e) => setUseMockData(e.target.checked)}
-              aria-label="Use mock data from CSV"
+              aria-label="Use demo data from CSV"
               className="h-4 w-4 rounded border-[#DBE4E8]"
             />
-            <span className="text-[#3F4547]">Mock data</span>
+            <span className="text-[#3F4547]">Demo data</span>
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input

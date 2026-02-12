@@ -89,7 +89,7 @@ function AppContent() {
           <div className="flex h-full flex-col items-center justify-center gap-4 px-4" role="status">
             <p className="text-center text-lg text-[#3F4547]">No events found</p>
             <p className="text-center text-sm text-[#7F8385]">
-              Change the time range or use mock data to see adoption metrics.
+              Change the time range or use demo data to see adoption metrics.
             </p>
           </div>
         ) : viewMode === 'overview' ? (

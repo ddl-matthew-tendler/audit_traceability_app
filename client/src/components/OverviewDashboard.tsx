@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { format, startOfDay, getHours } from 'date-fns';
 import type { AuditEvent } from '../types';
-import { getEventCategory } from '../utils/eventCategory';
 import { HoverTooltip } from './HoverTooltip';
 
 const DOMINO_ACCENT_COLORS = [
@@ -88,18 +87,6 @@ export function OverviewDashboard({
       .slice(-30);
   }, [events]);
 
-  const byCategory = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const ev of events) {
-      const cat = getEventCategory(ev);
-      const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      map.set(label, (map.get(label) ?? 0) + 1);
-    }
-    return Array.from(map.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-  }, [events]);
-
   const byHour = useMemo(() => {
     const buckets = new Array(24).fill(0);
     for (const ev of events) {
@@ -112,7 +99,6 @@ export function OverviewDashboard({
   }, [events]);
 
   const maxCount = Math.max(...byDay.map(([, c]) => c), 1);
-  const categoryTotal = byCategory.reduce((s, [, c]) => s + c, 0);
   const maxHourCount = Math.max(...byHour.map((h) => h.count), 1);
 
   return (
@@ -262,62 +248,6 @@ export function OverviewDashboard({
             </>
           )}
         </div>
-
-        {/* Activity by category — donut-style */}
-        {byCategory.length > 0 && (
-          <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-            <h3 className="mb-3 text-base font-medium text-[#3F4547]">Activity by category</h3>
-            <p className="mb-4 text-sm text-[#7F8385]">
-              How your team uses Domino — projects, data, executions, files, and more.
-            </p>
-            <div className="space-y-2">
-              {byCategory.map(([label, count], idx) => {
-                const pct = categoryTotal > 0 ? (count / categoryTotal) * 100 : 0;
-                const color = DOMINO_ACCENT_COLORS[idx % DOMINO_ACCENT_COLORS.length];
-                const maxCat = byCategory[0]?.[1] ?? 1;
-                return (
-                  <HoverTooltip
-                    key={label}
-                    content={
-                      <div className="space-y-0.5">
-                        <p className="font-semibold text-[#2E2E38]">{label}</p>
-                        <p>{count.toLocaleString()} events ({pct.toFixed(1)}%)</p>
-                        <p className="text-xs text-[#7F8385]">
-                          {label === 'Project' && 'Create, clone, archive projects'}
-                          {label === 'Data' && 'Datasets, uploads, snapshots'}
-                          {label === 'Execution' && 'Workspaces, jobs, runs'}
-                          {label === 'File' && 'Create, edit, delete files'}
-                          {label === 'Environment' && 'Environment management'}
-                          {label === 'User' && 'User and membership changes'}
-                          {label === 'Governance' && 'Bundles, approvals, staging'}
-                          {!['Project', 'Data', 'Execution', 'File', 'Environment', 'User', 'Governance'].includes(label) && 'Other activity'}
-                        </p>
-                      </div>
-                    }
-                    className="block"
-                  >
-                    <div className="flex cursor-help items-center gap-3">
-                      <span className="min-w-[100px] text-sm font-medium text-[#3F4547]">{label}</span>
-                      <div className="flex-1 overflow-hidden rounded bg-[#EDECFB]">
-                        <div
-                          className="h-6 rounded transition-all hover:opacity-90"
-                          style={{
-                            width: `${(count / maxCat) * 100}%`,
-                            minWidth: count > 0 ? 8 : 0,
-                            backgroundColor: color,
-                          }}
-                        />
-                      </div>
-                      <span className="w-16 shrink-0 text-right text-sm tabular-nums text-[#7F8385]">
-                        {count.toLocaleString()} ({pct.toFixed(1)}%)
-                      </span>
-                    </div>
-                  </HoverTooltip>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Peak activity hours */}
         <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">

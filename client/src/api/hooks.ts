@@ -34,6 +34,8 @@ export function useAuditEvents(
       const base = useMockData ? API + '/audit/mock' : API + '/audit';
       const url = new URL(base, window.location.href);
       if (useMockData) {
+        url.searchParams.set('startTimestamp', String(params.startTimestamp));
+        url.searchParams.set('endTimestamp', String(params.endTimestamp));
         if (params.limit != null) url.searchParams.set('limit', String(params.limit));
       } else {
         url.searchParams.set('startTimestamp', String(params.startTimestamp));
