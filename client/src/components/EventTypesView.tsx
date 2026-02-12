@@ -42,7 +42,14 @@ export function EventTypesView({ events }: EventTypesViewProps) {
 
         {/* Domino-styled table */}
         <div className="overflow-hidden rounded-lg border border-[#E0E0E0] bg-white shadow-sm">
-          <table className="w-full border-collapse" role="table">
+          <table className="w-full min-w-[600px] table-fixed border-collapse" role="table">
+            <colgroup>
+              <col style={{ width: 40 }} />
+              <col style={{ width: 'auto' }} />
+              <col style={{ width: 80 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: '33%' }} />
+            </colgroup>
             <thead>
               <tr className="bg-[#FAFAFA]">
                 <th
@@ -70,7 +77,7 @@ export function EventTypesView({ events }: EventTypesViewProps) {
                   Share
                 </th>
                 <th
-                  className="w-1/3 border-b border-[#E0E0E0] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#65657B]"
+                  className="border-b border-[#E0E0E0] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#65657B]"
                   scope="col"
                 >
                   Distribution
@@ -112,9 +119,9 @@ export function EventTypesView({ events }: EventTypesViewProps) {
                         {pct.toFixed(1)}%
                       </td>
                       <td className="px-4 py-3">
-                        <div className="h-6 overflow-hidden rounded bg-[#FAFAFA]">
+                        <div className="block h-6 overflow-hidden rounded bg-[#FAFAFA]">
                           <div
-                            className="h-full rounded transition-all"
+                            className="block h-full rounded transition-all"
                             style={{
                               width: `${barPct}%`,
                               minWidth: count > 0 ? 4 : 0,

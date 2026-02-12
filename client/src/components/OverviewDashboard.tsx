@@ -4,7 +4,7 @@ import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts';
 import type { AuditEvent } from '../types';
 import { HoverTooltip } from './HoverTooltip';
-import { getTimeBucketsForRange, bucketEventsByTime } from '../utils/chartTimeBuckets';
+import { getEventActivityBucketsForRange, bucketEventsByTime } from '../utils/chartTimeBuckets';
 import type { TimeRange } from './TimeRangePicker';
 
 function computeMetrics(events: AuditEvent[]) {
@@ -70,7 +70,7 @@ export function OverviewDashboard({
     : null;
 
   const { usageBuckets, usageData } = useMemo(() => {
-    const buckets = getTimeBucketsForRange(timeRange);
+    const buckets = getEventActivityBucketsForRange(timeRange);
     const counts = bucketEventsByTime(events, buckets);
     const data = buckets.map((b) => [b.value, counts.get(b.value) ?? 0]);
     return { usageBuckets: buckets, usageData: data };
@@ -229,11 +229,11 @@ export function OverviewDashboard({
           </HoverTooltip>
         </div>
 
-        {/* Usage over time — x-axis aligned with time filter */}
+        {/* Event Activity Over Time — bucket size derived from time filter */}
         <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-base font-medium text-[#3F4547]">Usage over time</h3>
+          <h3 className="mb-3 text-base font-medium text-[#3F4547]">Event Activity Over Time</h3>
           <p className="mb-4 text-sm text-[#7F8385]">
-            Events in the selected period — x-axis aligned with your time filter.
+            Events aggregated by interval — 1d→1h buckets, 7d→1d, 30d/90d→7d, 365d→30d.
           </p>
           {usageBuckets.length === 0 ? (
             <p className="text-sm text-[#7F8385]">No time buckets for the selected range.</p>

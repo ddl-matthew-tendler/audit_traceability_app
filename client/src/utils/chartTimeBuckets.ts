@@ -109,6 +109,43 @@ function _weeklyOrMonthlyBuckets(startMs: number, endMs: number, days: number): 
   return buckets;
 }
 
+/**
+ * Event Activity Over Time buckets — derive bucket size from selected time filter:
+ * 1d → 1h buckets | 7d → 1d buckets | 30d → 7d buckets | 90d → 7d buckets | 365d → 30d buckets
+ */
+export function getEventActivityBucketsForRange(range: TimeRange): TimeBucket[] {
+  const start = range.start.getTime();
+  const end = range.end.getTime();
+  const durationMs = end - start;
+  const durationDays = durationMs / (24 * 60 * 60 * 1000);
+
+  if (durationDays <= 1.5) {
+    return _hourlyBuckets(start, end);
+  }
+  if (durationDays <= 14) {
+    return _dailyBuckets(start, end, 1);
+  }
+  if (durationDays <= 120) {
+    return _dailyBuckets(start, end, 7);
+  }
+  return _dailyBuckets(start, end, 30);
+}
+
+function _hourlyBuckets(startMs: number, endMs: number): TimeBucket[] {
+  const buckets: TimeBucket[] = [];
+  let d = startOfHour(new Date(startMs));
+  const endDate = new Date(endMs);
+  while (d.getTime() <= endDate.getTime()) {
+    buckets.push({
+      value: d.getTime(),
+      label: format(d, 'ha'),
+      name: format(d, 'MMM d ha'),
+    });
+    d = addHours(d, 1);
+  }
+  return buckets;
+}
+
 /** Bucket events into time buckets. Returns map of bucket value (ms) -> count. */
 export function bucketEventsByTime(
   events: { timestamp?: number }[],
