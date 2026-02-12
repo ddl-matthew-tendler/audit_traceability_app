@@ -68,6 +68,6 @@ export const useAppStore = create<AppState>((set) => ({
   connectedComponentFilter: false,
   setConnectedComponentFilter: (connectedComponentFilter) =>
     set({ connectedComponentFilter }),
-  useMockData: true,
+  useMockData: false,
   setUseMockData: (useMockData) => set({ useMockData }),
 }));

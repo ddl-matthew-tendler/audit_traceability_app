@@ -1,7 +1,7 @@
 #
-## Usage Patterns App
+## Usage Trends App
 
-This repo includes **Usage Patterns**, a management-focused dashboard that turns Domino audit trail data into adoption and usage metrics. It helps business owners and managers see how much Domino is being used over time without digging into raw audit logs.
+This repo includes **Usage Trends**, a management-focused dashboard that turns Domino audit trail data into adoption and usage metrics. It helps business owners and managers see how much Domino is being used over time without digging into raw audit logs.
 
 ### What it does
 

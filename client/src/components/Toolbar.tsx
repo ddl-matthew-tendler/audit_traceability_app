@@ -13,7 +13,6 @@ const VIEW_LABELS: { id: ViewMode; label: string }[] = [
 interface ToolbarProps {
   timeRange: TimeRange;
   onTimeRangeChange: (r: TimeRange) => void;
-  onRefresh: () => void;
   lastUpdated: Date | null;
   eventCount: number;
   isLoading?: boolean;
@@ -22,19 +21,18 @@ interface ToolbarProps {
 export function Toolbar({
   timeRange,
   onTimeRangeChange,
-  onRefresh,
   lastUpdated,
   eventCount,
   isLoading,
 }: ToolbarProps) {
-  const { viewMode, setViewMode, useMockData, setUseMockData, autoRefresh, setAutoRefresh } = useAppStore();
+  const { viewMode, setViewMode, useMockData, setUseMockData } = useAppStore();
 
   return (
     <>
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[#DBE4E8] bg-white px-6 py-3">
         <div className="flex items-center gap-3">
           <img src="./domino-logo.svg" alt="" className="h-8" />
-          <h1 className="text-lg font-medium text-[#3F4547]">Usage Patterns</h1>
+          <h1 className="text-lg font-medium text-[#3F4547]">Usage Trends</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-3">
@@ -51,26 +49,9 @@ export function Toolbar({
             />
             <span className="text-[#3F4547]">Demo data</span>
           </label>
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              aria-label="Auto-refresh every 30 seconds"
-              disabled={useMockData}
-              className="h-4 w-4 rounded border-[#DBE4E8] disabled:opacity-50"
-            />
-            <span className="text-[#3F4547]">Auto-refresh</span>
-          </label>
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isLoading}
-            title="Refresh data"
-            className="min-h-[32px] rounded border border-[#C9C5F2] bg-[#EDECFB] px-3 py-1.5 text-sm text-[#1820A0] hover:bg-[#E0DEF7] disabled:opacity-50"
-          >
-            Refresh
-          </button>
+          <span className="text-sm text-[#7F8385]">
+            Refresh your browser for the latest data.
+          </span>
         </div>
       </header>
 

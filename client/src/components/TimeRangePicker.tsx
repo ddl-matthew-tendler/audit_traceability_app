@@ -4,8 +4,6 @@ import {
   subHours,
   startOfDay,
   endOfDay,
-  startOfToday,
-  endOfToday,
   format,
   isAfter,
   differenceInDays,
@@ -26,7 +24,6 @@ const PRESETS: { id: TimeRangePreset; label: string; getValue: () => { start: Da
     label: 'All time',
     getValue: () => ({ start: subDays(new Date(), 365 * 2), end: new Date() }),
   },
-  { id: 'today', label: 'Today', getValue: () => ({ start: startOfToday(), end: endOfToday() }) },
   {
     id: 'last24h',
     label: 'Last 24h',
@@ -96,7 +93,7 @@ export function TimeRangePicker({ value, onChange, disabled }: TimeRangePickerPr
 
   return (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Time range">
-      {PRESETS.filter((p) => p.id !== 'custom').map((p) => (
+      {PRESETS.filter((p) => p.id !== 'custom' && p.id !== 'today').map((p) => (
         <button
           key={p.id}
           type="button"

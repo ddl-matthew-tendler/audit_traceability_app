@@ -16,6 +16,9 @@ export const DOMINO_COLORS = [
 export function applyDominoHighchartsTheme(): void {
   Highcharts.setOptions({
     colors: DOMINO_COLORS,
+    time: {
+      useUTC: false,
+    },
     chart: {
       style: {
         fontFamily: 'Inter, Lato, Helvetica Neue, Helvetica, Arial, sans-serif',

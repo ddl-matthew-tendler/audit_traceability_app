@@ -57,7 +57,6 @@ function AppContent() {
       <Toolbar
         timeRange={timeRange}
         onTimeRangeChange={setTimeRange}
-        onRefresh={() => refetch()}
         lastUpdated={dataUpdatedAt ? new Date(dataUpdatedAt) : null}
         eventCount={events.length}
         isLoading={isLoading || isFetching}
