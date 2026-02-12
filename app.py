@@ -239,17 +239,17 @@ async def audit(request: Request):
                     return JSONResponse([_normalize_audit_event(ev) for ev in data if isinstance(ev, dict)])
                 return JSONResponse(data)
             last_status = r.status_code
-            last_err = data if isinstance(data, str) else str(data) or f"Audit API returned {r.status_code}"
+            last_err = _sanitize_upstream_error(r.status_code, data)
             _log(f"GET /api/audit {path} -> {r.status_code} {last_err[:150]}")
             if r.status_code != 404:
                 break
 
         err_msg = last_err or f"Audit API returned {last_status}"
-        if last_status == 404 or "not found" in str(err_msg).lower():
+        # Append hint only if we didn't already include it (e.g. HTML 404 already has a short message)
+        if last_status == 404 and "may not be available" not in err_msg:
             err_msg = (
                 f"{err_msg} "
-                "The Audit Trail API may not be available on this Domino deployment "
-                "(e.g. Domino Cloud, plan, or admin-only). Try AUDIT_API_PATH env or contact your admin."
+                "Try AUDIT_API_PATH env or contact your admin."
             )
         return JSONResponse({"error": err_msg}, status_code=last_status or 502)
     except Exception as e:
