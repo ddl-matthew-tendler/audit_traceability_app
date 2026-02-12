@@ -93,14 +93,25 @@ Build a settings page with a form for user preferences
 
 This tells Cursor to follow Domino's design system (button hierarchy, typography, spacing, error handling, etc.) whether you're building new UI, reviewing existing code, or asking for improvements.
 
-## Traceability Explorer App
+## Usage Patterns App
 
-This repo includes a **Traceability Explorer** app that visualizes Domino Audit Trail events as an interactive DAG (Directed Acyclic Graph).
+This repo includes **Usage Patterns**, a management-focused dashboard that turns Domino audit trail data into adoption and usage metrics. It helps business owners and managers see how much Domino is being used over time without digging into raw audit logs.
 
-### Stack
+### What it does
 
-- **Backend:** Python FastAPI (proxies Domino Audit Trail and v4 users APIs with auth)
-- **Frontend:** React 18, Vite, Tailwind CSS, React Flow, Zustand, React Query, date-fns
+- **Overview** — Key metrics (total events, active users, active projects) plus a daily usage trend for the selected period.
+- **Usage over time** — Bar chart of events per day to see adoption trends.
+- **Stacked by project** — Stacked area chart: X = date, Y = number of events, with one band per project so you can see which projects drive activity over time.
+- **Users per project** — Line chart: X = date, Y = unique users; one line per project showing how many distinct users had activity in that project each day.
+- **By project** — Bar chart of total events per project (which projects have the most activity).
+- **Event types** — Breakdown of what users are doing (e.g. runs, workspaces, file edits, app publishes).
+
+Time range can be set to All time, Today, Last 24h, Last 7 days, Last 30 days, or Custom. The app can use **mock data** from a CSV (default) or live data from the Domino Audit Trail API.
+
+### Tech stack
+
+- **Backend:** Python 3, FastAPI, uvicorn (Domino-compatible; no Node.js at runtime). Proxies Domino Audit Trail API; supports API key or Domino session token.
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS. State: Zustand, TanStack React Query. Utilities: date-fns. Charts are SVG-based (no chart library).
 
 Domino environments are Python-only, so the server runs with uvicorn instead of Node.js.
 
