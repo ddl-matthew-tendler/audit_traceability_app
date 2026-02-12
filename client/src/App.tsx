@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toolbar } from './components/Toolbar';
 import { OverviewDashboard } from './components/OverviewDashboard';
 import { UsageOverTimeView } from './components/UsageOverTimeView';
+import { StackedEventsByProjectView } from './components/StackedEventsByProjectView';
+import { UniqueUsersByProjectView } from './components/UniqueUsersByProjectView';
 import { ActivityByProjectView } from './components/ActivityByProjectView';
 import { EventTypesView } from './components/EventTypesView';
 import { useAppStore } from './store/useAppStore';
@@ -77,6 +79,10 @@ function AppContent() {
           <OverviewDashboard events={events} />
         ) : viewMode === 'usageOverTime' ? (
           <UsageOverTimeView events={events} />
+        ) : viewMode === 'stackedEventsByProject' ? (
+          <StackedEventsByProjectView events={events} />
+        ) : viewMode === 'uniqueUsersByProject' ? (
+          <UniqueUsersByProjectView events={events} />
         ) : viewMode === 'activityByProject' ? (
           <ActivityByProjectView events={events} />
         ) : (

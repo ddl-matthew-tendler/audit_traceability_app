@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 
-export type ViewMode = 'overview' | 'usageOverTime' | 'activityByProject' | 'eventTypes';
+export type ViewMode =
+  | 'overview'
+  | 'usageOverTime'
+  | 'stackedEventsByProject'
+  | 'uniqueUsersByProject'
+  | 'activityByProject'
+  | 'eventTypes';
 
 interface AppState {
   viewMode: ViewMode;

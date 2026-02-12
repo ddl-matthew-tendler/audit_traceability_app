@@ -35,7 +35,13 @@ export const NODE_COLORS: Record<EventCategory, string> = {
   default: '#6B7280',
 };
 
-export type ViewMode = 'overview' | 'usageOverTime' | 'activityByProject' | 'eventTypes';
+export type ViewMode =
+  | 'overview'
+  | 'usageOverTime'
+  | 'stackedEventsByProject'
+  | 'uniqueUsersByProject'
+  | 'activityByProject'
+  | 'eventTypes';
 
 export interface TimeRangePreset {
   label: string;

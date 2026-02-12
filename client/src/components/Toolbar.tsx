@@ -4,6 +4,8 @@ import { TimeRangePicker, type TimeRange } from './TimeRangePicker';
 const VIEW_LABELS: { id: ViewMode; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'usageOverTime', label: 'Usage over time' },
+  { id: 'stackedEventsByProject', label: 'Stacked by project' },
+  { id: 'uniqueUsersByProject', label: 'Users per project' },
   { id: 'activityByProject', label: 'By project' },
   { id: 'eventTypes', label: 'Event types' },
 ];
