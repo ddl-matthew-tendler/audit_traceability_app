@@ -26,6 +26,10 @@ AUDIT_API_FALLBACK_PATHS = [
     p.strip() for p in os.environ.get("AUDIT_API_FALLBACK_PATHS", "/auditevents,/v4/auditevents").split(",")
     if p.strip()
 ]
+# Domino Audit API max limit per request (we paginate when client asks for more).
+AUDIT_API_MAX_LIMIT = int(os.environ.get("AUDIT_API_MAX_LIMIT", "1000"))
+# Max total events we'll fetch via pagination (safety cap).
+AUDIT_PAGINATION_CAP = int(os.environ.get("AUDIT_PAGINATION_CAP", "50000"))
 
 app = FastAPI()
 
@@ -212,47 +216,89 @@ def _audit_paths_to_try() -> list[str]:
     return out
 
 
+def _parse_events_from_response(data: dict | list) -> list[dict]:
+    """Extract list of raw event dicts from API response (events array or {events: [...]})."""
+    if isinstance(data, dict) and "events" in data:
+        return list(data.get("events", []))
+    if isinstance(data, list):
+        return list(data)
+    return []
+
+
 @app.get("/api/audit")
 async def audit(request: Request):
-    """Proxy GET /api/audit -> AUDIT_API_HOST + path (tries fallback paths on 404)."""
+    """Proxy GET /api/audit -> AUDIT_API_HOST + path. Paginates when limit > API max (1000)."""
     base = AUDIT_API_HOST
     try:
         headers = await get_auth_headers(request)
         headers["Accept"] = "application/json"
         params = dict(request.query_params)
+        try:
+            requested_limit = int(params.get("limit", AUDIT_API_MAX_LIMIT))
+        except (TypeError, ValueError):
+            requested_limit = AUDIT_API_MAX_LIMIT
+        requested_limit = max(0, min(requested_limit, AUDIT_PAGINATION_CAP))
         paths_to_try = _audit_paths_to_try()
         last_status = last_err = None
+        working_path: str | None = None
+
+        # First request: find a path that works, using limit capped at API max
+        page_limit = min(requested_limit, AUDIT_API_MAX_LIMIT)
+        page_params = {**params, "limit": str(page_limit), "offset": str(params.get("offset", 0))}
 
         for path in paths_to_try:
             url = f"{base}{path}" if path.startswith("/") else f"{base}/{path}"
-            r = requests.get(url, params=params, headers=headers, timeout=30)
+            r = requests.get(url, params=page_params, headers=headers, timeout=30)
             try:
                 data = r.json()
             except Exception:
                 data = r.text
             if r.ok:
+                working_path = path
                 _log(f"GET /api/audit succeeded with path: {path}")
-                if isinstance(data, dict) and "events" in data:
-                    events = data.get("events", [])
-                    normalized = [_normalize_audit_event(ev) for ev in events if isinstance(ev, dict)]
-                    return JSONResponse(normalized)
-                if isinstance(data, list):
-                    return JSONResponse([_normalize_audit_event(ev) for ev in data if isinstance(ev, dict)])
-                return JSONResponse(data)
+                break
             last_status = r.status_code
             last_err = _sanitize_upstream_error(r.status_code, data)
             _log(f"GET /api/audit {path} -> {r.status_code} {last_err[:150]}")
             if r.status_code != 404:
                 break
 
-        err_msg = last_err or f"Audit API returned {last_status}"
-        # Append hint only if we didn't already include it (e.g. HTML 404 already has a short message)
-        if last_status == 404 and "may not be available" not in err_msg:
-            err_msg = (
-                f"{err_msg} "
-                "Try AUDIT_API_PATH env or contact your admin."
-            )
-        return JSONResponse({"error": err_msg}, status_code=last_status or 502)
+        if working_path is None:
+            err_msg = last_err or f"Audit API returned {last_status}"
+            if last_status == 404 and "may not be available" not in err_msg:
+                err_msg = f"{err_msg} Try AUDIT_API_PATH env or contact your admin."
+            return JSONResponse({"error": err_msg}, status_code=last_status or 502)
+
+        # Parse first page (data already from successful request in loop)
+        raw_events = _parse_events_from_response(data)
+        all_events = [_normalize_audit_event(ev) for ev in raw_events if isinstance(ev, dict)]
+
+        # Paginate if client asked for more than one page
+        offset = page_limit
+        while (
+            requested_limit > AUDIT_API_MAX_LIMIT
+            and len(all_events) < requested_limit
+            and len(raw_events) >= AUDIT_API_MAX_LIMIT
+            and offset < AUDIT_PAGINATION_CAP
+        ):
+            page_params = {**params, "limit": str(AUDIT_API_MAX_LIMIT), "offset": str(offset)}
+            url = f"{base}{working_path}" if working_path.startswith("/") else f"{base}/{working_path}"
+            r = requests.get(url, params=page_params, headers=headers, timeout=30)
+            try:
+                data = r.json()
+            except Exception:
+                data = r.text
+            if not r.ok:
+                _log(f"GET /api/audit pagination offset={offset} -> {r.status_code}")
+                break
+            raw_events = _parse_events_from_response(data)
+            all_events.extend(_normalize_audit_event(ev) for ev in raw_events if isinstance(ev, dict))
+            offset += AUDIT_API_MAX_LIMIT
+            if len(raw_events) < AUDIT_API_MAX_LIMIT:
+                break
+
+        _log(f"GET /api/audit returning {len(all_events)} events")
+        return JSONResponse(all_events)
     except Exception as e:
         _log(f"GET /api/audit error: {e}")
         return JSONResponse({"error": str(e)}, status_code=502)
