@@ -8,6 +8,8 @@ import {
   endOfToday,
   format,
   isAfter,
+  differenceInDays,
+  differenceInHours,
 } from 'date-fns';
 
 export type TimeRangePreset = 'all' | 'today' | 'last24h' | 'last7d' | 'last30d' | 'custom';
@@ -176,4 +178,39 @@ export function timeRangeToParams(range: TimeRange): { startTimestamp: number; e
     startTimestamp: range.start.getTime(),
     endTimestamp: range.end.getTime(),
   };
+}
+
+/** Previous period of same duration, ending when current period starts. Returns null for "all" preset. */
+export function getPreviousPeriodParams(
+  range: TimeRange
+): { startTimestamp: number; endTimestamp: number } | null {
+  if (range.preset === 'all') return null;
+  const duration = range.end.getTime() - range.start.getTime();
+  if (duration <= 0) return null;
+  const prevEnd = range.start.getTime();
+  const prevStart = prevEnd - duration;
+  return { startTimestamp: prevStart, endTimestamp: prevEnd };
+}
+
+/** Human-readable label for the comparison period (e.g. "previous 30 days") */
+export function getPreviousPeriodLabel(range: TimeRange): string {
+  switch (range.preset) {
+    case 'today':
+      return 'previous day';
+    case 'last24h':
+      return 'previous 24 hours';
+    case 'last7d':
+      return 'previous 7 days';
+    case 'last30d':
+      return 'previous 30 days';
+    case 'custom': {
+      const days = differenceInDays(range.end, range.start);
+      const hours = differenceInHours(range.end, range.start);
+      if (days >= 1) return `previous ${days} days`;
+      if (hours >= 1) return `previous ${hours} hours`;
+      return 'previous period';
+    }
+    default:
+      return 'previous period';
+  }
 }

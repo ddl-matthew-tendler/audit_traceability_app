@@ -9,7 +9,12 @@ import { ActivityByProjectView } from './components/ActivityByProjectView';
 import { EventTypesView } from './components/EventTypesView';
 import { useAppStore } from './store/useAppStore';
 import { useAuditEvents } from './api/hooks';
-import { getDefaultTimeRange, timeRangeToParams } from './components/TimeRangePicker';
+import {
+  getDefaultTimeRange,
+  timeRangeToParams,
+  getPreviousPeriodParams,
+  getPreviousPeriodLabel,
+} from './components/TimeRangePicker';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,9 +34,21 @@ function AppContent() {
     [timeRange, useMockData]
   );
 
+  const previousParams = useMemo(() => {
+    const prev = getPreviousPeriodParams(timeRange);
+    if (!prev) return null;
+    return { ...prev, limit: useMockData ? 0 : 10_000 };
+  }, [timeRange, useMockData]);
+
   const { data: events = [], isLoading, isFetching, isError, error, refetch, dataUpdatedAt } = useAuditEvents(
     params,
     useAppStore.getState().autoRefresh,
+    useMockData
+  );
+
+  const { data: previousEvents = [] } = useAuditEvents(
+    previousParams,
+    false,
     useMockData
   );
 
@@ -76,7 +93,12 @@ function AppContent() {
             </p>
           </div>
         ) : viewMode === 'overview' ? (
-          <OverviewDashboard events={events} />
+          <OverviewDashboard
+            events={events}
+            previousEvents={previousParams ? previousEvents : []}
+            showComparison={previousParams != null}
+            previousPeriodLabel={getPreviousPeriodLabel(timeRange)}
+          />
         ) : viewMode === 'usageOverTime' ? (
           <UsageOverTimeView events={events} />
         ) : viewMode === 'stackedEventsByProject' ? (
