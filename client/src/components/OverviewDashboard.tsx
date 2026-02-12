@@ -1,6 +1,19 @@
 import { useMemo } from 'react';
-import { format, startOfDay } from 'date-fns';
+import { format, startOfDay, getHours } from 'date-fns';
 import type { AuditEvent } from '../types';
+import { getEventCategory } from '../utils/eventCategory';
+import { HoverTooltip } from './HoverTooltip';
+
+const DOMINO_ACCENT_COLORS = [
+  '#543FDE',
+  '#0070CC',
+  '#28A464',
+  '#CCB718',
+  '#FF6543',
+  '#E835A7',
+  '#2EDCC4',
+  '#A9734C',
+];
 
 function computeMetrics(events: AuditEvent[]) {
   const users = new Set<string>();
@@ -75,7 +88,32 @@ export function OverviewDashboard({
       .slice(-30);
   }, [events]);
 
+  const byCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const ev of events) {
+      const cat = getEventCategory(ev);
+      const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+      map.set(label, (map.get(label) ?? 0) + 1);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }, [events]);
+
+  const byHour = useMemo(() => {
+    const buckets = new Array(24).fill(0);
+    for (const ev of events) {
+      if (ev.timestamp) {
+        const h = getHours(new Date(ev.timestamp));
+        buckets[h]++;
+      }
+    }
+    return buckets.map((count, hour) => ({ hour, count }));
+  }, [events]);
+
   const maxCount = Math.max(...byDay.map(([, c]) => c), 1);
+  const categoryTotal = byCategory.reduce((s, [, c]) => s + c, 0);
+  const maxHourCount = Math.max(...byHour.map((h) => h.count), 1);
 
   return (
     <div className="h-full overflow-auto p-6" role="region" aria-label="Usage overview">
@@ -87,49 +125,103 @@ export function OverviewDashboard({
 
         {/* Metric cards */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#7F8385]">Total events</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-[#3F4547]">
-              {metrics.totalEvents.toLocaleString()}
-            </p>
-            {totalEventsChange ? (
-              <p className={`mt-0.5 text-xs font-medium ${totalEventsChange.color}`}>
-                {totalEventsChange.text}
+          <HoverTooltip
+            content={
+              <div className="space-y-1">
+                <p className="font-semibold text-[#2E2E38]">Total events</p>
+                <p>
+                  Count of all audit trail events in the selected period. Includes project actions, datasets, jobs,
+                  workspaces, files, and more.
+                </p>
+                <p className="text-xs text-[#7F8385]">
+                  Current: {metrics.totalEvents.toLocaleString()}
+                  {showComparison &&
+                    ` • Previous: ${previousMetrics.totalEvents.toLocaleString()}`}
+                </p>
+              </div>
+            }
+            className="w-full"
+          >
+            <div className="cursor-help rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+              <p className="text-sm font-medium text-[#7F8385]">Total events</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-[#3F4547]">
+                {metrics.totalEvents.toLocaleString()}
               </p>
-            ) : (
-              <p className="mt-0.5 text-xs text-[#7F8385]">In selected period</p>
-            )}
-          </div>
-          <div className="rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#7F8385]">Active users</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-[#3F4547]">
-              {metrics.activeUsers.toLocaleString()}
-            </p>
-            {activeUsersChange ? (
-              <p className={`mt-0.5 text-xs font-medium ${activeUsersChange.color}`}>
-                {activeUsersChange.text}
+              {totalEventsChange ? (
+                <p className={`mt-0.5 text-xs font-medium ${totalEventsChange.color}`}>
+                  {totalEventsChange.text}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-[#7F8385]">In selected period</p>
+              )}
+            </div>
+          </HoverTooltip>
+          <HoverTooltip
+            content={
+              <div className="space-y-1">
+                <p className="font-semibold text-[#2E2E38]">Active users</p>
+                <p>
+                  Unique actors who performed at least one action in the selected period. Includes users who created,
+                  edited, or executed in projects.
+                </p>
+                <p className="text-xs text-[#7F8385]">
+                  Current: {metrics.activeUsers.toLocaleString()}
+                  {showComparison &&
+                    ` • Previous: ${previousMetrics.activeUsers.toLocaleString()}`}
+                </p>
+              </div>
+            }
+            className="w-full"
+          >
+            <div className="cursor-help rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+              <p className="text-sm font-medium text-[#7F8385]">Active users</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-[#3F4547]">
+                {metrics.activeUsers.toLocaleString()}
               </p>
-            ) : (
-              <p className="mt-0.5 text-xs text-[#7F8385]">Unique actors</p>
-            )}
-          </div>
-          <div className="rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#7F8385]">Active projects</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-[#3F4547]">
-              {metrics.activeProjects.toLocaleString()}
-            </p>
-            {activeProjectsChange ? (
-              <p className={`mt-0.5 text-xs font-medium ${activeProjectsChange.color}`}>
-                {activeProjectsChange.text}
+              {activeUsersChange ? (
+                <p className={`mt-0.5 text-xs font-medium ${activeUsersChange.color}`}>
+                  {activeUsersChange.text}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-[#7F8385]">Unique actors</p>
+              )}
+            </div>
+          </HoverTooltip>
+          <HoverTooltip
+            content={
+              <div className="space-y-1">
+                <p className="font-semibold text-[#2E2E38]">Active projects</p>
+                <p>
+                  Number of distinct projects with at least one audit event. Shows platform breadth and team adoption
+                  across projects.
+                </p>
+                <p className="text-xs text-[#7F8385]">
+                  Current: {metrics.activeProjects.toLocaleString()}
+                  {showComparison &&
+                    ` • Previous: ${previousMetrics.activeProjects.toLocaleString()}`}
+                </p>
+              </div>
+            }
+            className="w-full"
+          >
+            <div className="cursor-help rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+              <p className="text-sm font-medium text-[#7F8385]">Active projects</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-[#3F4547]">
+                {metrics.activeProjects.toLocaleString()}
               </p>
-            ) : (
-              <p className="mt-0.5 text-xs text-[#7F8385]">With activity</p>
-            )}
-          </div>
+              {activeProjectsChange ? (
+                <p className={`mt-0.5 text-xs font-medium ${activeProjectsChange.color}`}>
+                  {activeProjectsChange.text}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-[#7F8385]">With activity</p>
+              )}
+            </div>
+          </HoverTooltip>
         </div>
 
         {/* Usage over time mini-chart */}
-        <div className="rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
+        <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-base font-medium text-[#3F4547]">Usage over time</h3>
           <p className="mb-4 text-sm text-[#7F8385]">Events per day — trend in the selected period.</p>
           {byDay.length === 0 ? (
@@ -138,19 +230,29 @@ export function OverviewDashboard({
             <>
               <div className="flex items-end gap-0.5" style={{ minHeight: 140 }}>
                 {byDay.map(([dayMs, count]) => (
-                  <div
+                  <HoverTooltip
                     key={dayMs}
+                    content={
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-[#2E2E38]">
+                          {format(new Date(dayMs), 'EEEE, MMMM d, yyyy')}
+                        </p>
+                        <p>{count.toLocaleString()} events</p>
+                        <p className="text-xs text-[#7F8385]">
+                          {maxCount > 0 ? ((count / maxCount) * 100).toFixed(0) : 0}% of peak day
+                        </p>
+                      </div>
+                    }
                     className="flex flex-1 flex-col items-center"
-                    title={`${format(dayMs, 'MMM d, yyyy')}: ${count.toLocaleString()} events`}
                   >
                     <div
-                      className="w-full min-w-[6px] rounded-t bg-[#3B3BD3] transition-opacity hover:opacity-90"
+                      className="w-full min-w-[6px] cursor-help rounded-t bg-[#3B3BD3] transition-opacity hover:opacity-90"
                       style={{
                         height: `${(count / maxCount) * 100}px`,
                         minHeight: count > 0 ? 6 : 0,
                       }}
                     />
-                  </div>
+                  </HoverTooltip>
                 ))}
               </div>
               <div className="mt-2 flex justify-between text-xs text-[#7F8385]">
@@ -159,6 +261,123 @@ export function OverviewDashboard({
               </div>
             </>
           )}
+        </div>
+
+        {/* Activity by category — donut-style */}
+        {byCategory.length > 0 && (
+          <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-base font-medium text-[#3F4547]">Activity by category</h3>
+            <p className="mb-4 text-sm text-[#7F8385]">
+              How your team uses Domino — projects, data, executions, files, and more.
+            </p>
+            <div className="space-y-2">
+              {byCategory.map(([label, count], idx) => {
+                const pct = categoryTotal > 0 ? (count / categoryTotal) * 100 : 0;
+                const color = DOMINO_ACCENT_COLORS[idx % DOMINO_ACCENT_COLORS.length];
+                const maxCat = byCategory[0]?.[1] ?? 1;
+                return (
+                  <HoverTooltip
+                    key={label}
+                    content={
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-[#2E2E38]">{label}</p>
+                        <p>{count.toLocaleString()} events ({pct.toFixed(1)}%)</p>
+                        <p className="text-xs text-[#7F8385]">
+                          {label === 'Project' && 'Create, clone, archive projects'}
+                          {label === 'Data' && 'Datasets, uploads, snapshots'}
+                          {label === 'Execution' && 'Workspaces, jobs, runs'}
+                          {label === 'File' && 'Create, edit, delete files'}
+                          {label === 'Environment' && 'Environment management'}
+                          {label === 'User' && 'User and membership changes'}
+                          {label === 'Governance' && 'Bundles, approvals, staging'}
+                          {!['Project', 'Data', 'Execution', 'File', 'Environment', 'User', 'Governance'].includes(label) && 'Other activity'}
+                        </p>
+                      </div>
+                    }
+                    className="block"
+                  >
+                    <div className="flex cursor-help items-center gap-3">
+                      <span className="min-w-[100px] text-sm font-medium text-[#3F4547]">{label}</span>
+                      <div className="flex-1 overflow-hidden rounded bg-[#EDECFB]">
+                        <div
+                          className="h-6 rounded transition-all hover:opacity-90"
+                          style={{
+                            width: `${(count / maxCat) * 100}%`,
+                            minWidth: count > 0 ? 8 : 0,
+                            backgroundColor: color,
+                          }}
+                        />
+                      </div>
+                      <span className="w-16 shrink-0 text-right text-sm tabular-nums text-[#7F8385]">
+                        {count.toLocaleString()} ({pct.toFixed(1)}%)
+                      </span>
+                    </div>
+                  </HoverTooltip>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Peak activity hours */}
+        <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
+          <h3 className="mb-3 text-base font-medium text-[#3F4547]">Peak activity hours</h3>
+          <p className="mb-4 text-sm text-[#7F8385]">
+            When your team is most active — events by hour of day (your local timezone).
+          </p>
+          <div className="flex items-end gap-0.5" style={{ minHeight: 120 }}>
+            {byHour.map(({ hour, count }) => (
+              <HoverTooltip
+                key={hour}
+                content={
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-[#2E2E38]">
+                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                    </p>
+                    <p>{count.toLocaleString()} events</p>
+                    <p className="text-xs text-[#7F8385]">
+                      {maxHourCount > 0 ? ((count / maxHourCount) * 100).toFixed(0) : 0}% of peak hour
+                    </p>
+                  </div>
+                }
+                className="flex flex-1 flex-col items-center"
+              >
+                <div
+                  className="w-full min-w-[4px] cursor-help rounded-t transition-opacity hover:opacity-90"
+                  style={{
+                    height: `${(count / maxHourCount) * 100}px`,
+                    minHeight: count > 0 ? 4 : 0,
+                    backgroundColor: DOMINO_ACCENT_COLORS[hour % DOMINO_ACCENT_COLORS.length],
+                  }}
+                />
+              </HoverTooltip>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-between text-xs text-[#7F8385]">
+            <span>12 AM</span>
+            <span>6 AM</span>
+            <span>12 PM</span>
+            <span>6 PM</span>
+            <span>11 PM</span>
+          </div>
+        </div>
+
+        {/* View all Audit Trail CTA */}
+        <div className="rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
+          <a
+            href="https://life-sciences-demo.domino-eval.com/audit-trail"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[#543FDE] hover:text-[#3B23D1] hover:underline"
+          >
+            View all Audit Trail events
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+          <p className="mt-1 text-xs text-[#7F8385]">
+            Open the full Audit Trail in Domino to search, filter, and explore all events.
+          </p>
         </div>
       </div>
     </div>

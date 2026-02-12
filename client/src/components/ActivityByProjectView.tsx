@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { AuditEvent } from '../types';
+import { HoverTooltip } from './HoverTooltip';
 
 interface ActivityByProjectViewProps {
   events: AuditEvent[];
@@ -26,21 +27,35 @@ export function ActivityByProjectView({ events }: ActivityByProjectViewProps) {
         <h2 className="mb-2 text-lg font-medium text-[#3F4547]">Activity by project</h2>
         <p className="mb-4 text-sm text-[#7F8385]">Which projects are driving the most usage.</p>
         <div className="space-y-3">
-          {counts.map(([project, count]) => (
-            <div key={project} className="flex items-center gap-4">
-              <span className="min-w-[180px] truncate text-sm text-[#3F4547]" title={project}>
-                {project}
-              </span>
-              <div className="flex-1 overflow-hidden rounded bg-[#EDECFB]">
-                <div
-                  className="h-6 rounded bg-[#3B3BD3]"
-                  style={{ width: `${(count / maxCount) * 100}%`, minWidth: count > 0 ? '4px' : 0 }}
-                />
+          {counts.map(([project, count], idx) => (
+            <HoverTooltip
+              key={project}
+              content={
+                <div className="space-y-0.5">
+                  <p className="font-semibold text-[#2E2E38]">{project}</p>
+                  <p>{count.toLocaleString()} events</p>
+                  <p className="text-xs text-[#7F8385]">
+                    {maxCount > 0 ? ((count / maxCount) * 100).toFixed(0) : 0}% of top project · Rank #{idx + 1}
+                  </p>
+                </div>
+              }
+              className="block"
+            >
+              <div className="flex cursor-help items-center gap-4 rounded px-1 py-0.5 transition-colors hover:bg-[#FAFAFA]">
+                <span className="min-w-[180px] truncate text-sm text-[#3F4547]" title={project}>
+                  {project}
+                </span>
+                <div className="flex-1 overflow-hidden rounded bg-[#EDECFB]">
+                  <div
+                    className="h-6 rounded bg-[#3B3BD3]"
+                    style={{ width: `${(count / maxCount) * 100}%`, minWidth: count > 0 ? '4px' : 0 }}
+                  />
+                </div>
+                <span className="w-12 shrink-0 text-right text-sm tabular-nums text-[#7F8385]">
+                  {count.toLocaleString()}
+                </span>
               </div>
-              <span className="w-12 shrink-0 text-right text-sm tabular-nums text-[#7F8385]">
-                {count.toLocaleString()}
-              </span>
-            </div>
+            </HoverTooltip>
           ))}
         </div>
       </div>

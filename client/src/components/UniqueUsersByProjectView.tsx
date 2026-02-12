@@ -138,25 +138,32 @@ export function UniqueUsersByProjectView({ events }: UniqueUsersByProjectViewPro
               />
             );
           })}
-          {series.map((s, idx) => (
-            <g key={s.project}>
-              <line
-                x1={width - margin.right + 8}
-                y1={margin.top + idx * 18 + 5}
-                x2={width - margin.right + 18}
-                y2={margin.top + idx * 18 + 5}
-                stroke={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
-                strokeWidth={2}
-              />
-              <text
-                x={width - margin.right + 22}
-                y={margin.top + idx * 18 + 10}
-                className="fill-[#3F4547] text-[11px]"
-              >
-                {s.project.length > 20 ? s.project.slice(0, 18) + '…' : s.project}
-              </text>
-            </g>
-          ))}
+          {series.map((s, idx) => {
+            const maxUsers = Math.max(...s.points.map((p) => p.count), 0);
+            const totalDays = s.points.filter((p) => p.count > 0).length;
+            return (
+              <g key={s.project}>
+                <line
+                  x1={width - margin.right + 8}
+                  y1={margin.top + idx * 18 + 5}
+                  x2={width - margin.right + 18}
+                  y2={margin.top + idx * 18 + 5}
+                  stroke={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
+                  strokeWidth={2}
+                  style={{ cursor: 'help' }}
+                >
+                  <title>{`${s.project}: up to ${maxUsers} users, activity on ${totalDays} days`}</title>
+                </line>
+                <text
+                  x={width - margin.right + 22}
+                  y={margin.top + idx * 18 + 10}
+                  className="fill-[#3F4547] text-[11px]"
+                >
+                  {s.project.length > 20 ? s.project.slice(0, 18) + '…' : s.project}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
     </div>

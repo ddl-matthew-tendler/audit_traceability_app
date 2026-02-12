@@ -102,16 +102,22 @@ export function StackedEventsByProjectView({ events }: StackedEventsByProjectVie
           X = date, Y = number of events. Each band is one project; stacked total shows overall activity.
         </p>
         <svg width={width} height={height} className="overflow-visible">
-          {series.map((s, idx) => (
-            <path
-              key={s.project}
-              d={areaPaths[idx]}
-              fill={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
-              fillOpacity={0.85}
-              stroke={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
-              strokeWidth={1}
-            />
-          ))}
+          {series.map((s, idx) => {
+            const total = s.points.reduce((sum, p) => sum + (p.yTop - p.yBottom), 0);
+            return (
+              <path
+                key={s.project}
+                d={areaPaths[idx]}
+                fill={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
+                fillOpacity={0.85}
+                stroke={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
+                strokeWidth={1}
+                style={{ cursor: 'help' }}
+              >
+                <title>{`${s.project}: ${total.toLocaleString()} events — Hover legend for details`}</title>
+              </path>
+            );
+          })}
           <line
             x1={margin.left}
             y1={margin.top}
@@ -150,24 +156,31 @@ export function StackedEventsByProjectView({ events }: StackedEventsByProjectVie
               {Math.round(maxTotal * q)}
             </text>
           ))}
-          {series.map((s, idx) => (
-            <g key={s.project}>
-              <rect
-                x={width - margin.right + 8}
-                y={margin.top + idx * 18}
-                width={10}
-                height={10}
-                fill={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
-              />
-              <text
-                x={width - margin.right + 22}
-                y={margin.top + idx * 18 + 10}
-                className="fill-[#3F4547] text-[11px]"
-              >
-                {s.project.length > 20 ? s.project.slice(0, 18) + '…' : s.project}
-              </text>
-            </g>
-          ))}
+          {series.map((s, idx) => {
+            const total = s.points.reduce((sum, p) => sum + (p.yTop - p.yBottom), 0);
+            const daysWithActivity = s.points.filter((p) => p.yTop > p.yBottom).length;
+            return (
+              <g key={s.project}>
+                <rect
+                  x={width - margin.right + 8}
+                  y={margin.top + idx * 18}
+                  width={10}
+                  height={10}
+                  fill={PROJECT_COLORS[idx % PROJECT_COLORS.length]}
+                  style={{ cursor: 'help' }}
+                >
+                  <title>{`${s.project}: ${total.toLocaleString()} events across ${daysWithActivity} days`}</title>
+                </rect>
+                <text
+                  x={width - margin.right + 22}
+                  y={margin.top + idx * 18 + 10}
+                  className="fill-[#3F4547] text-[11px]"
+                >
+                  {s.project.length > 20 ? s.project.slice(0, 18) + '…' : s.project}
+                </text>
+              </g>
+            );
+          })}
         </svg>
       </div>
     </div>
