@@ -48,6 +48,7 @@ async def startup_log():
     _log(f"  client/dist/assets exists: {(DIST_PATH / 'assets').exists()}")
     _log(f"  index.html exists: {(DIST_PATH / 'index.html').exists()}")
     _log(f"  DOMINO_API_HOST set: {bool(DOMINO_API_HOST)}")
+    _log(f"  AUDIT_API_HOST: {AUDIT_API_HOST}")
     _log(f"  AUDIT_API_PATH (and fallbacks on 404): {_audit_paths_to_try()}")
     if DOMINO_API_HOST:
         _log(f"  DOMINO_API_HOST: {DOMINO_API_HOST[:60]}{'...' if len(DOMINO_API_HOST) > 60 else ''}")
