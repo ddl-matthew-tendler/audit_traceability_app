@@ -175,6 +175,27 @@ async def audit_mock(request: Request):
     return JSONResponse(events)
 
 
+def _sanitize_upstream_error(status_code: int, body: str | dict | None) -> str:
+    """Avoid surfacing full HTML 404 pages or huge bodies to the client."""
+    if body is None:
+        return f"Audit API returned {status_code}"
+    text = body if isinstance(body, str) else str(body)
+    text = (text or "").strip()
+    # Domino often returns full HTML for 404; don't send that to the UI
+    if text and (
+        text.lstrip().startswith("<")
+        or "<!doctype" in text[:200].lower()
+        or "</html>" in text.lower()
+    ):
+        return (
+            f"Domino returned {status_code} (HTML page — audit endpoint not found). "
+            "The Audit Trail API may not be enabled or may use a different path on this deployment."
+        )
+    if len(text) > 500:
+        text = text[:500] + "..."
+    return text or f"Audit API returned {status_code}"
+
+
 def _audit_paths_to_try() -> list[str]:
     """Return list of paths to try: configured path first, then fallbacks."""
     primary = AUDIT_API_PATH if AUDIT_API_PATH.startswith("/") else f"/{AUDIT_API_PATH}"
