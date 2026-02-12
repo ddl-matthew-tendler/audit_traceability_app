@@ -26,18 +26,18 @@ function AppContent() {
   const [timeRange, setTimeRange] = useState(getDefaultTimeRange);
   const { viewMode, useMockData } = useAppStore();
 
-  const params = useMemo(
-    () => ({
-      ...timeRangeToParams(timeRange),
-      limit: useMockData ? 0 : 10_000,
-    }),
-    [timeRange, useMockData]
-  );
+  const params = useMemo(() => {
+    const base = timeRangeToParams(timeRange);
+    const limit =
+      useMockData ? 0 : timeRange.preset === 'all' ? 50_000 : 10_000;
+    return { ...base, limit };
+  }, [timeRange, useMockData]);
 
   const previousParams = useMemo(() => {
     const prev = getPreviousPeriodParams(timeRange);
     if (!prev) return null;
-    return { ...prev, limit: useMockData ? 0 : 10_000 };
+    const limit = useMockData ? 0 : 10_000;
+    return { ...prev, limit };
   }, [timeRange, useMockData]);
 
   const { data: events = [], isLoading, isFetching, isError, error, refetch, dataUpdatedAt } = useAuditEvents(

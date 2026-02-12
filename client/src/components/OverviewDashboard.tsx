@@ -69,11 +69,20 @@ export function OverviewDashboard({
     ? formatChange(metrics.activeProjects, previousMetrics.activeProjects, previousPeriodLabel)
     : null;
 
-  const { usageBuckets, usageData } = useMemo(() => {
+  const { usageBuckets, usageData, pointRange } = useMemo(() => {
     const buckets = getEventActivityBucketsForRange(timeRange);
     const counts = bucketEventsByTime(events, buckets);
-    const data = buckets.map((b) => [b.value, counts.get(b.value) ?? 0]);
-    return { usageBuckets: buckets, usageData: data };
+    const interval =
+      buckets.length >= 2
+        ? buckets[1].value - buckets[0].value
+        : 3600000;
+    // Center each column in its bucket: x = bucketStart + interval/2 so column spans [bucketStart, bucketStart+interval]
+    const data = buckets.map((b) => ({
+      x: b.value + interval / 2,
+      y: counts.get(b.value) ?? 0,
+      name: b.name,
+    }));
+    return { usageBuckets: buckets, usageData: data, pointRange: interval };
   }, [events, timeRange]);
 
   const byHour = useMemo(() => {
@@ -91,13 +100,28 @@ export function OverviewDashboard({
     () => ({
       chart: { type: 'column', height: 200 },
       title: { text: undefined },
-      xAxis: { type: 'datetime', tickmarkPlacement: 'on' },
+      xAxis: {
+        type: 'datetime',
+        tickmarkPlacement: 'on',
+        labels: { align: 'center' },
+      },
       yAxis: { title: { text: 'Events' }, min: 0 },
-      series: [{ type: 'column', name: 'Events', data: usageData, color: '#543FDE' }],
+      series: [
+        {
+          type: 'column',
+          name: 'Events',
+          data: usageData,
+          color: '#543FDE',
+          pointRange,
+        },
+      ],
       plotOptions: { column: { borderRadius: 4 } },
+      tooltip: {
+        pointFormat: '<b>{point.name}</b><br/>{point.y} events',
+      },
       credits: { enabled: false },
     }),
-    [usageData]
+    [usageData, pointRange]
   );
 
   const peakHoursOptions: Highcharts.Options = useMemo(
@@ -229,12 +253,9 @@ export function OverviewDashboard({
           </HoverTooltip>
         </div>
 
-        {/* Event Activity Over Time — bucket size derived from time filter */}
+        {/* Event Activity Over Time */}
         <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-base font-medium text-[#3F4547]">Event Activity Over Time</h3>
-          <p className="mb-4 text-sm text-[#7F8385]">
-            Events aggregated by interval — 1d→1h buckets, 7d→1d, 30d/90d→7d, 365d→30d.
-          </p>
+          <h3 className="mb-4 text-base font-medium text-[#3F4547]">Event Activity Over Time</h3>
           {usageBuckets.length === 0 ? (
             <p className="text-sm text-[#7F8385]">No time buckets for the selected range.</p>
           ) : (
