@@ -99,29 +99,30 @@ This repo includes **Usage Patterns**, a management-focused dashboard that turns
 
 ### What it does
 
-- **Overview** — Key metrics (total events, active users, active projects) plus a daily usage trend for the selected period.
-- **Usage over time** — Bar chart of events per day to see adoption trends.
-- **Stacked by project** — Stacked area chart: X = date, Y = number of events, with one band per project so you can see which projects drive activity over time.
-- **Users per project** — Line chart: X = date, Y = unique users; one line per project showing how many distinct users had activity in that project each day.
-- **By project** — Bar chart of total events per project (which projects have the most activity).
-- **Event types** — Breakdown of what users are doing (e.g. runs, workspaces, file edits, app publishes).
+- **Overview** — Key metrics (total events, active users, active projects) with period-over-period comparison, plus Usage over time and Peak activity hours charts.
+- **Usage over time** — Column chart of events; x-axis aligned with the selected time filter (e.g. 7 days → 7 bars, 30 days → 30 bars).
+- **Stacked by project** — Stacked area chart: X = time (aligned with filter), Y = events, with one band per project.
+- **Users per project** — Line chart: X = time (aligned with filter), Y = unique users per project.
+- **By project** — Horizontal bar chart of total events per project.
+- **Event types** — Table of event type counts with share and distribution.
 
-Time range can be set to All time, Today, Last 24h, Last 7 days, Last 30 days, or Custom. The app can use **mock data** from a CSV (default) or live data from the Domino Audit Trail API.
+Time range defaults to **Last 7 days**. Options: All time, Today, Last 24h, Last 7 days, Last 30 days, or Custom. Use **Demo data** from a CSV or live data from the Domino Audit Trail API.
 
 ### Tech stack
 
 - **Backend:** Python 3, FastAPI, uvicorn (Domino-compatible; no Node.js at runtime). Proxies Domino Audit Trail API; supports API key or Domino session token.
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS. State: Zustand, TanStack React Query. Utilities: date-fns. Charts are SVG-based (no chart library).
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS. State: Zustand, TanStack React Query. Charts: Highcharts with Domino accent colors.
 
 Domino environments are Python-only, so the server runs with uvicorn instead of Node.js.
 
 ### Build and run
 
 ```bash
-# Install dependencies (root + client)
-npm install
+# Install Python dependencies
+pip install -r requirements.txt
 
-# Build the client (required before running)
+# Install client deps and build frontend (Node.js required)
+npm install
 npm run build
 
 # Start the server (serves client/dist and /api/*)

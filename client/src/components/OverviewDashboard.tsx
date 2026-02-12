@@ -1,18 +1,11 @@
 import { useMemo } from 'react';
-import { format, startOfDay, getHours } from 'date-fns';
+import { getHours } from 'date-fns';
+import HighchartsReact from 'highcharts-react-official';
+import Highcharts from 'highcharts';
 import type { AuditEvent } from '../types';
 import { HoverTooltip } from './HoverTooltip';
-
-const DOMINO_ACCENT_COLORS = [
-  '#543FDE',
-  '#0070CC',
-  '#28A464',
-  '#CCB718',
-  '#FF6543',
-  '#E835A7',
-  '#2EDCC4',
-  '#A9734C',
-];
+import { getTimeBucketsForRange, bucketEventsByTime } from '../utils/chartTimeBuckets';
+import type { TimeRange } from './TimeRangePicker';
 
 function computeMetrics(events: AuditEvent[]) {
   const users = new Set<string>();
@@ -53,6 +46,7 @@ interface OverviewDashboardProps {
   previousEvents: AuditEvent[];
   showComparison: boolean;
   previousPeriodLabel: string;
+  timeRange: TimeRange;
 }
 
 export function OverviewDashboard({
@@ -60,6 +54,7 @@ export function OverviewDashboard({
   previousEvents,
   showComparison,
   previousPeriodLabel,
+  timeRange,
 }: OverviewDashboardProps) {
   const metrics = useMemo(() => computeMetrics(events), [events]);
   const previousMetrics = useMemo(() => computeMetrics(previousEvents), [previousEvents]);
@@ -74,18 +69,12 @@ export function OverviewDashboard({
     ? formatChange(metrics.activeProjects, previousMetrics.activeProjects, previousPeriodLabel)
     : null;
 
-  const byDay = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const ev of events) {
-      if (ev.timestamp) {
-        const day = startOfDay(new Date(ev.timestamp)).getTime();
-        map.set(day, (map.get(day) ?? 0) + 1);
-      }
-    }
-    return Array.from(map.entries())
-      .sort((a, b) => a[0] - b[0])
-      .slice(-30);
-  }, [events]);
+  const { usageBuckets, usageData } = useMemo(() => {
+    const buckets = getTimeBucketsForRange(timeRange);
+    const counts = bucketEventsByTime(events, buckets);
+    const data = buckets.map((b) => [b.value, counts.get(b.value) ?? 0]);
+    return { usageBuckets: buckets, usageData: data };
+  }, [events, timeRange]);
 
   const byHour = useMemo(() => {
     const buckets = new Array(24).fill(0);
@@ -98,8 +87,42 @@ export function OverviewDashboard({
     return buckets.map((count, hour) => ({ hour, count }));
   }, [events]);
 
-  const maxCount = Math.max(...byDay.map(([, c]) => c), 1);
-  const maxHourCount = Math.max(...byHour.map((h) => h.count), 1);
+  const usageOptions: Highcharts.Options = useMemo(
+    () => ({
+      chart: { type: 'column', height: 200 },
+      title: { text: undefined },
+      xAxis: { type: 'datetime', tickmarkPlacement: 'on' },
+      yAxis: { title: { text: 'Events' }, min: 0 },
+      series: [{ type: 'column', name: 'Events', data: usageData, color: '#543FDE' }],
+      plotOptions: { column: { borderRadius: 4 } },
+      credits: { enabled: false },
+    }),
+    [usageData]
+  );
+
+  const peakHoursOptions: Highcharts.Options = useMemo(
+    () => ({
+      chart: { type: 'column', height: 200 },
+      title: { text: undefined },
+      xAxis: {
+        categories: byHour.map((_, h) =>
+          h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
+        ),
+      },
+      yAxis: { title: { text: 'Events' }, min: 0 },
+      series: [
+        {
+          type: 'column',
+          name: 'Events',
+          data: byHour.map((h) => h.count),
+          color: '#543FDE',
+        },
+      ],
+      plotOptions: { column: { borderRadius: 4 } },
+      credits: { enabled: false },
+    }),
+    [byHour]
+  );
 
   return (
     <div className="h-full overflow-auto p-6" role="region" aria-label="Usage overview">
@@ -206,46 +229,16 @@ export function OverviewDashboard({
           </HoverTooltip>
         </div>
 
-        {/* Usage over time mini-chart */}
+        {/* Usage over time — x-axis aligned with time filter */}
         <div className="mb-8 rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
           <h3 className="mb-3 text-base font-medium text-[#3F4547]">Usage over time</h3>
-          <p className="mb-4 text-sm text-[#7F8385]">Events per day — trend in the selected period.</p>
-          {byDay.length === 0 ? (
-            <p className="text-sm text-[#7F8385]">No events with timestamps in the selected range.</p>
+          <p className="mb-4 text-sm text-[#7F8385]">
+            Events in the selected period — x-axis aligned with your time filter.
+          </p>
+          {usageBuckets.length === 0 ? (
+            <p className="text-sm text-[#7F8385]">No time buckets for the selected range.</p>
           ) : (
-            <>
-              <div className="flex items-end gap-0.5" style={{ minHeight: 140 }}>
-                {byDay.map(([dayMs, count]) => (
-                  <HoverTooltip
-                    key={dayMs}
-                    content={
-                      <div className="space-y-0.5">
-                        <p className="font-semibold text-[#2E2E38]">
-                          {format(new Date(dayMs), 'EEEE, MMMM d, yyyy')}
-                        </p>
-                        <p>{count.toLocaleString()} events</p>
-                        <p className="text-xs text-[#7F8385]">
-                          {maxCount > 0 ? ((count / maxCount) * 100).toFixed(0) : 0}% of peak day
-                        </p>
-                      </div>
-                    }
-                    className="flex flex-1 flex-col items-center"
-                  >
-                    <div
-                      className="w-full min-w-[6px] cursor-help rounded-t bg-[#3B3BD3] transition-opacity hover:opacity-90"
-                      style={{
-                        height: `${(count / maxCount) * 100}px`,
-                        minHeight: count > 0 ? 6 : 0,
-                      }}
-                    />
-                  </HoverTooltip>
-                ))}
-              </div>
-              <div className="mt-2 flex justify-between text-xs text-[#7F8385]">
-                <span>{format(byDay[0][0], 'MMM d')}</span>
-                <span>{format(byDay[byDay.length - 1][0], 'MMM d')}</span>
-              </div>
-            </>
+            <HighchartsReact highcharts={Highcharts} options={usageOptions} />
           )}
         </div>
 
@@ -255,41 +248,7 @@ export function OverviewDashboard({
           <p className="mb-4 text-sm text-[#7F8385]">
             When your team is most active — events by hour of day (your local timezone).
           </p>
-          <div className="flex items-end gap-0.5" style={{ minHeight: 120 }}>
-            {byHour.map(({ hour, count }) => (
-              <HoverTooltip
-                key={hour}
-                content={
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-[#2E2E38]">
-                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-                    </p>
-                    <p>{count.toLocaleString()} events</p>
-                    <p className="text-xs text-[#7F8385]">
-                      {maxHourCount > 0 ? ((count / maxHourCount) * 100).toFixed(0) : 0}% of peak hour
-                    </p>
-                  </div>
-                }
-                className="flex flex-1 flex-col items-center"
-              >
-                <div
-                  className="w-full min-w-[4px] cursor-help rounded-t transition-opacity hover:opacity-90"
-                  style={{
-                    height: `${(count / maxHourCount) * 100}px`,
-                    minHeight: count > 0 ? 4 : 0,
-                    backgroundColor: DOMINO_ACCENT_COLORS[hour % DOMINO_ACCENT_COLORS.length],
-                  }}
-                />
-              </HoverTooltip>
-            ))}
-          </div>
-          <div className="mt-2 flex justify-between text-xs text-[#7F8385]">
-            <span>12 AM</span>
-            <span>6 AM</span>
-            <span>12 PM</span>
-            <span>6 PM</span>
-            <span>11 PM</span>
-          </div>
+          <HighchartsReact highcharts={Highcharts} options={peakHoursOptions} />
         </div>
 
         {/* View all Audit Trail CTA */}

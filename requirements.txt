@@ -1,4 +1,4 @@
-# Domino Governance Dashboard Dependencies
+# Usage Patterns / Audit Traceability App — Python backend
 fastapi>=0.104.0
-uvicorn>=0.24.0
+uvicorn[standard]>=0.24.0
 requests>=2.31.0

@@ -98,13 +98,14 @@ function AppContent() {
             previousEvents={previousParams ? previousEvents : []}
             showComparison={previousParams != null}
             previousPeriodLabel={getPreviousPeriodLabel(timeRange)}
+            timeRange={timeRange}
           />
         ) : viewMode === 'usageOverTime' ? (
-          <UsageOverTimeView events={events} />
+          <UsageOverTimeView events={events} timeRange={timeRange} />
         ) : viewMode === 'stackedEventsByProject' ? (
-          <StackedEventsByProjectView events={events} />
+          <StackedEventsByProjectView events={events} timeRange={timeRange} />
         ) : viewMode === 'uniqueUsersByProject' ? (
-          <UniqueUsersByProjectView events={events} />
+          <UniqueUsersByProjectView events={events} timeRange={timeRange} />
         ) : viewMode === 'activityByProject' ? (
           <ActivityByProjectView events={events} />
         ) : (
