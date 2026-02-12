@@ -17,8 +17,13 @@ from fastapi.staticfiles import StaticFiles
 TOKEN_URL = "http://localhost:8899/access-token"
 DOMINO_API_HOST = os.environ.get("DOMINO_API_HOST", "").strip() or None
 # Audit Trail API path - Admin Guide uses /api/audittrail/v1/auditevents (tested working).
-# Platform API uses /auditevents; override via AUDIT_API_PATH if needed.
+# Platform API (e.g. Domino Cloud) often uses /auditevents. Override via AUDIT_API_PATH if needed.
 AUDIT_API_PATH = os.environ.get("AUDIT_API_PATH", "/api/audittrail/v1/auditevents").strip()
+# If default path 404s, try these in order (Domino Cloud often exposes only the Platform path).
+AUDIT_API_FALLBACK_PATHS = [
+    p.strip() for p in os.environ.get("AUDIT_API_FALLBACK_PATHS", "/auditevents,/v4/auditevents").split(",")
+    if p.strip()
+]
 
 app = FastAPI()
 
@@ -41,7 +46,7 @@ async def startup_log():
     _log(f"  client/dist/assets exists: {(DIST_PATH / 'assets').exists()}")
     _log(f"  index.html exists: {(DIST_PATH / 'index.html').exists()}")
     _log(f"  DOMINO_API_HOST set: {bool(DOMINO_API_HOST)}")
-    _log(f"  AUDIT_API_PATH: {AUDIT_API_PATH}")
+    _log(f"  AUDIT_API_PATH (and fallbacks on 404): {_audit_paths_to_try()}")
     if DOMINO_API_HOST:
         _log(f"  DOMINO_API_HOST: {DOMINO_API_HOST[:60]}{'...' if len(DOMINO_API_HOST) > 60 else ''}")
     _log("=== Ready for requests ===")
@@ -170,43 +175,62 @@ async def audit_mock(request: Request):
     return JSONResponse(events)
 
 
+def _audit_paths_to_try() -> list[str]:
+    """Return list of paths to try: configured path first, then fallbacks."""
+    primary = AUDIT_API_PATH if AUDIT_API_PATH.startswith("/") else f"/{AUDIT_API_PATH}"
+    rest = [p if p.startswith("/") else f"/{p}" for p in AUDIT_API_FALLBACK_PATHS if p]
+    seen = {primary}
+    out = [primary]
+    for p in rest:
+        if p not in seen:
+            seen.add(p)
+            out.append(p)
+    return out
+
+
 @app.get("/api/audit")
 async def audit(request: Request):
-    """Proxy GET /api/audit -> DOMINO_API_HOST + AUDIT_API_PATH"""
+    """Proxy GET /api/audit -> DOMINO_API_HOST + AUDIT_API_PATH (tries fallback paths on 404)."""
     base = get_domino_host()
     if not base:
         return JSONResponse({"error": "DOMINO_API_HOST not set"}, status_code=503)
     try:
         headers = await get_auth_headers(request)
         headers["Accept"] = "application/json"
-        path = AUDIT_API_PATH if AUDIT_API_PATH.startswith("/") else f"/{AUDIT_API_PATH}"
-        url = f"{base.rstrip('/')}{path}"
         params = dict(request.query_params)
-        r = requests.get(url, params=params, headers=headers, timeout=30)
-        try:
-            data = r.json()
-        except Exception:
-            data = r.text
-        if not r.ok:
-            err_msg = data if isinstance(data, str) else str(data) or f"Audit API returned {r.status_code}"
-            _log(f"GET /api/audit upstream error: {r.status_code} {err_msg[:200]}")
-            # Surface common Domino Cloud error with actionable hint
-            if "not found" in str(err_msg).lower() or r.status_code == 404:
-                err_msg = (
-                    f"{err_msg} "
-                    "The Audit Trail API may not be available on this Domino deployment "
-                    "(e.g. Domino Cloud, plan, or admin-only). Try AUDIT_API_PATH env or contact your admin."
-                )
-            return JSONResponse({"error": err_msg}, status_code=r.status_code)
+        paths_to_try = _audit_paths_to_try()
+        last_status = last_err = None
 
-        # Admin Guide API returns {"events": [...]}; normalize to our format
-        if isinstance(data, dict) and "events" in data:
-            events = data.get("events", [])
-            normalized = [_normalize_audit_event(ev) for ev in events if isinstance(ev, dict)]
-            return JSONResponse(normalized)
-        if isinstance(data, list):
-            return JSONResponse([_normalize_audit_event(ev) for ev in data if isinstance(ev, dict)])
-        return JSONResponse(data)
+        for path in paths_to_try:
+            url = f"{base.rstrip('/')}{path}"
+            r = requests.get(url, params=params, headers=headers, timeout=30)
+            try:
+                data = r.json()
+            except Exception:
+                data = r.text
+            if r.ok:
+                _log(f"GET /api/audit succeeded with path: {path}")
+                if isinstance(data, dict) and "events" in data:
+                    events = data.get("events", [])
+                    normalized = [_normalize_audit_event(ev) for ev in events if isinstance(ev, dict)]
+                    return JSONResponse(normalized)
+                if isinstance(data, list):
+                    return JSONResponse([_normalize_audit_event(ev) for ev in data if isinstance(ev, dict)])
+                return JSONResponse(data)
+            last_status = r.status_code
+            last_err = data if isinstance(data, str) else str(data) or f"Audit API returned {r.status_code}"
+            _log(f"GET /api/audit {path} -> {r.status_code} {last_err[:150]}")
+            if r.status_code != 404:
+                break
+
+        err_msg = last_err or f"Audit API returned {last_status}"
+        if last_status == 404 or "not found" in str(err_msg).lower():
+            err_msg = (
+                f"{err_msg} "
+                "The Audit Trail API may not be available on this Domino deployment "
+                "(e.g. Domino Cloud, plan, or admin-only). Try AUDIT_API_PATH env or contact your admin."
+            )
+        return JSONResponse({"error": err_msg}, status_code=last_status or 502)
     except Exception as e:
         _log(f"GET /api/audit error: {e}")
         return JSONResponse({"error": str(e)}, status_code=502)
