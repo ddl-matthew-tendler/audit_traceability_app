@@ -17,7 +17,7 @@ export function applyDominoHighchartsTheme(): void {
   Highcharts.setOptions({
     colors: DOMINO_COLORS,
     time: {
-      useUTC: false,
+      timezone: undefined,
     },
     chart: {
       style: {
