@@ -18,6 +18,7 @@ export interface AuditEvent {
   hardwareTier?: string;
   environmentName?: string;
   runId?: string;
+  jobId?: string;
   runFile?: string;
   runOrigin?: string;
   raw?: Record<string, unknown>;

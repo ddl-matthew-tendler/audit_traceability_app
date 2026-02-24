@@ -33,6 +33,11 @@ AUDIT_PAGINATION_CAP = int(os.environ.get("AUDIT_PAGINATION_CAP", "50000"))
 RUNS_ENRICHMENT_ENABLED = os.environ.get("RUNS_ENRICHMENT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 RUNS_ENRICHMENT_MAX_RUNS = int(os.environ.get("RUNS_ENRICHMENT_MAX_RUNS", "300"))
 RUNS_ENRICHMENT_TIMEOUT_SEC = int(os.environ.get("RUNS_ENRICHMENT_TIMEOUT_SEC", "10"))
+# Jobs enrichment (inspired by domaudit-main professional services tool).
+# Uses /v4/jobs/{jobId} + /v4/jobs/{jobId}/runtimeExecutionDetails for rich fields.
+JOBS_ENRICHMENT_ENABLED = os.environ.get("JOBS_ENRICHMENT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+JOBS_ENRICHMENT_MAX = int(os.environ.get("JOBS_ENRICHMENT_MAX", "200"))
+JOBS_ENRICHMENT_TIMEOUT_SEC = int(os.environ.get("JOBS_ENRICHMENT_TIMEOUT_SEC", "10"))
 
 app = FastAPI()
 
@@ -131,12 +136,49 @@ def _normalize_audit_event(raw: dict) -> dict:
                     continue
         return None
 
+    def _metadata_first_match(meta: dict, prefix: str):
+        """Return tuple of string values from metadata keys starting with prefix (e.g. environment_1)."""
+        out = []
+        for k, v in meta.items():
+            if isinstance(k, str) and k.startswith(prefix) and isinstance(v, str) and v.strip():
+                out.append(v.strip())
+        return tuple(out) if out else None
+
+    def _deep_get(obj, *keys):
+        """Walk a chain of keys into nested dicts, returning first non-empty string found."""
+        for key in keys:
+            if not isinstance(obj, dict):
+                return None
+            obj = obj.get(key)
+        if isinstance(obj, str) and obj.strip():
+            return obj.strip()
+        return None
+
+    # domaudit-style: extract from nested metadata objects that mirror /v4/jobs response shape.
+    # Job detail payloads nest data under statuses.*, stageTime.*, environment.*, startedBy.*, etc.
+    meta_statuses = metadata.get("statuses") if isinstance(metadata.get("statuses"), dict) else {}
+    meta_stage_time = metadata.get("stageTime") if isinstance(metadata.get("stageTime"), dict) else {}
+    meta_environment = metadata.get("environment") if isinstance(metadata.get("environment"), dict) else {}
+    meta_started_by = metadata.get("startedBy") if isinstance(metadata.get("startedBy"), dict) else {}
+    meta_hardware = metadata.get("hardwareTier") if isinstance(metadata.get("hardwareTier"), dict) else {}
+
+    # Calculate duration from stageTime.completedTime - stageTime.runStartTime when no explicit duration.
+    stage_duration = None
+    completed_ms = meta_stage_time.get("completedTime")
+    start_ms = meta_stage_time.get("runStartTime")
+    if isinstance(completed_ms, (int, float)) and isinstance(start_ms, (int, float)) and completed_ms > start_ms:
+        stage_duration = (completed_ms - start_ms) / 1000.0
+
     return {
         "id": raw.get("id"),
         "event": action.get("eventName") or raw.get("event") or "",
         "timestamp": raw.get("timestamp"),
         "actorId": actor.get("id") or actor.get("userId"),
-        "actorName": actor.get("name"),
+        "actorName": _first_non_empty(
+            actor.get("name"),
+            _deep_get(metadata, "startedBy", "username"),
+            meta_started_by.get("username"),
+        ),
         "targetType": entity.get("entityType") or raw.get("targetType"),
         "targetId": entity.get("id") or raw.get("targetId"),
         "targetName": entity.get("name") or raw.get("targetName"),
@@ -150,36 +192,61 @@ def _normalize_audit_event(raw: dict) -> dict:
             metadata.get("command"),
             metadata.get("jobRunCommand"),
             metadata.get("commandToRun"),
+            metadata.get("commandLine"),
+            metadata.get("entrypoint"),
         ),
-        "status": _first_non_empty(raw.get("status"), metadata.get("status"), metadata.get("runStatus")),
+        "status": _first_non_empty(
+            raw.get("status"),
+            metadata.get("status"),
+            metadata.get("runStatus"),
+            metadata.get("executionStatus"),
+            meta_statuses.get("executionStatus"),
+            metadata.get("currentStatus"),
+            _deep_get(metadata, "data", "currentStatus"),
+        ),
         "durationSec": _first_number(
             raw.get("durationSec"),
             metadata.get("runDurationSec"),
             metadata.get("runDurationSeconds"),
             metadata.get("runDurationInSeconds"),
+            stage_duration,
         ),
         "computeTier": _first_non_empty(
             raw.get("computeTier"),
             metadata.get("computeTier"),
             metadata.get("computeSize"),
             metadata.get("tier"),
+            metadata.get("machineSize"),
         ),
         "hardwareTier": _first_non_empty(
             raw.get("hardwareTier"),
-            metadata.get("hardwareTier"),
             metadata.get("hardwareTierName"),
+            meta_hardware.get("name") if isinstance(meta_hardware, dict) else (metadata.get("hardwareTier") if isinstance(metadata.get("hardwareTier"), str) else None),
+            metadata.get("hardware"),
+            metadata.get("hardwareTier_1"),
+            metadata.get("hardwareTier_0"),
+            *(_metadata_first_match(metadata, "hardwareTier") or ()),
         ),
         "environmentName": _first_non_empty(
             raw.get("environmentName"),
             metadata.get("environmentName"),
-            metadata.get("environment"),
+            meta_environment.get("environmentName"),
+            metadata.get("environment") if isinstance(metadata.get("environment"), str) else None,
             metadata.get("environmentRevisionName"),
+            metadata.get("environmentDisplayName"),
+            metadata.get("environment_1"),
+            metadata.get("environment_0"),
+            *(_metadata_first_match(metadata, "environment") or ()),
         ),
         "runId": _first_non_empty(
             raw.get("runId"),
             metadata.get("runId"),
             metadata.get("executionId"),
-            entity.get("id") if (entity.get("entityType") or "").lower() == "run" else None,
+            entity.get("id") if (entity.get("entityType") or "").lower() in ("run", "job") else None,
+        ),
+        "jobId": _first_non_empty(
+            metadata.get("jobId"),
+            entity.get("id") if (entity.get("entityType") or "").lower() == "job" else None,
         ),
         "runFile": _first_non_empty(raw.get("runFile"), metadata.get("runFile"), metadata.get("filename")),
         "runOrigin": _first_non_empty(raw.get("runOrigin"), metadata.get("runOrigin"), metadata.get("source")),
@@ -260,10 +327,13 @@ def _enrich_events_with_runs(events: list[dict], headers: dict) -> list[dict]:
             continue
         _fill(event, "command", run_data.get("command"))
         _fill(event, "status", run_data.get("status"))
-        _fill(event, "durationSec", run_data.get("runDurationInSeconds"))
-        _fill(event, "hardwareTier", run_data.get("hardwareTierName"))
+        _fill(event, "durationSec", run_data.get("runDurationInSeconds") or run_data.get("runDurationSec"))
+        _fill(event, "hardwareTier", run_data.get("hardwareTierName") or run_data.get("hardwareTier"))
+        _fill(event, "withinProjectName", run_data.get("projectIdentity") or run_data.get("projectName"))
+        _fill(event, "actorName", run_data.get("userName"))
+        _fill(event, "targetName", run_data.get("title"))
 
-        # Try common environment names from run payloads.
+        # Try common environment names from run payloads (RunMonolithDTO, Provenance, etc.).
         env_name = None
         if isinstance(run_data.get("environmentDetails"), dict):
             env_name = (
@@ -274,6 +344,116 @@ def _enrich_events_with_runs(events: list[dict], headers: dict) -> list[dict]:
         enriched_count += 1
 
     _log(f"Run enrichment resolved {len(runs_by_id)} run records; applied to {enriched_count} events.")
+    return events
+
+
+def _enrich_events_with_jobs(events: list[dict], headers: dict) -> list[dict]:
+    """
+    Job enrichment using /v4/jobs/{jobId} (+ runtimeExecutionDetails).
+    Inspired by domaudit-main professional services tool which uses these endpoints
+    to extract command, status, hardware tier, environment, timing, and user info.
+    """
+    if not JOBS_ENRICHMENT_ENABLED:
+        return events
+
+    base = get_domino_host()
+    if not base:
+        _log("JOBS_ENRICHMENT_ENABLED=true but DOMINO_API_HOST is not set; skipping.")
+        return events
+
+    job_ids: list[str] = []
+    seen: set[str] = set()
+    for event in events:
+        jid = event.get("jobId") or ""
+        if isinstance(jid, str) and jid.strip() and jid.strip().lower() != "unknown":
+            jid = jid.strip()
+            if jid not in seen:
+                seen.add(jid)
+                job_ids.append(jid)
+        if len(job_ids) >= JOBS_ENRICHMENT_MAX:
+            break
+
+    if not job_ids:
+        return events
+
+    jobs_by_id: dict[str, dict] = {}
+    for jid in job_ids:
+        merged: dict = {}
+        for path in [f"/v4/jobs/{jid}", f"/v4/jobs/{jid}/runtimeExecutionDetails"]:
+            try:
+                url = f"{base.rstrip('/')}{path}"
+                resp = requests.get(url, headers=headers, timeout=JOBS_ENRICHMENT_TIMEOUT_SEC)
+                if resp.ok:
+                    payload = resp.json()
+                    if isinstance(payload, dict):
+                        merged.update(payload)
+            except Exception:
+                continue
+        if merged:
+            jobs_by_id[jid] = merged
+
+    if not jobs_by_id:
+        _log("Job enrichment attempted but no job details were resolved.")
+        return events
+
+    def _fill(event: dict, key: str, value):
+        if event.get(key) not in (None, "", "Unknown"):
+            return
+        if value in (None, ""):
+            return
+        event[key] = value
+
+    enriched_count = 0
+    for event in events:
+        jid = (event.get("jobId") or "").strip()
+        if not jid:
+            continue
+        job = jobs_by_id.get(jid)
+        if not job:
+            continue
+
+        _fill(event, "command", job.get("jobRunCommand") or job.get("command"))
+
+        statuses = job.get("statuses") or {}
+        if isinstance(statuses, dict):
+            _fill(event, "status", statuses.get("executionStatus"))
+        _fill(event, "status", job.get("status"))
+
+        # Hardware tier — domaudit shows it as a direct string field
+        hw = job.get("hardwareTier")
+        if isinstance(hw, dict):
+            _fill(event, "hardwareTier", hw.get("name") or hw.get("hardwareTierName"))
+        elif isinstance(hw, str):
+            _fill(event, "hardwareTier", hw)
+        _fill(event, "hardwareTier", job.get("hardwareTierName"))
+
+        # Environment — nested object with environmentName
+        env = job.get("environment") or {}
+        if isinstance(env, dict):
+            _fill(event, "environmentName", env.get("environmentName"))
+
+        # User
+        started_by = job.get("startedBy") or {}
+        if isinstance(started_by, dict):
+            _fill(event, "actorName", started_by.get("username"))
+
+        # Duration from stageTime (completedTime - runStartTime) in milliseconds
+        stage_time = job.get("stageTime") or {}
+        if isinstance(stage_time, dict):
+            completed = stage_time.get("completedTime")
+            started = stage_time.get("runStartTime")
+            if isinstance(completed, (int, float)) and isinstance(started, (int, float)) and completed > started:
+                _fill(event, "durationSec", (completed - started) / 1000.0)
+
+        _fill(event, "durationSec", job.get("runDurationInSeconds"))
+
+        # Project
+        _fill(event, "withinProjectName", job.get("projectName"))
+        _fill(event, "targetName", job.get("title") or job.get("name"))
+
+        enriched_count += 1
+
+    _log(f"Job enrichment resolved {len(jobs_by_id)} job records; applied to {enriched_count} events.")
     return events
 
 
@@ -452,6 +632,7 @@ async def audit(request: Request):
                 break
 
         all_events = _enrich_events_with_runs(all_events, headers)
+        all_events = _enrich_events_with_jobs(all_events, headers)
         _log(f"GET /api/audit returning {len(all_events)} events")
         return JSONResponse(all_events)
     except Exception as e:

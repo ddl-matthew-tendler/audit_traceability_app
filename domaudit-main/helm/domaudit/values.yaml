@@ -1,0 +1,110 @@
+# Default values for domaudit.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: quay.io/domino/domaudit
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v1.0.4"
+
+config:
+  port: 8000
+  compute_namespace: domino-compute
+  platform_namespace: domino-platform
+
+imagePullSecrets: [{"name": "domino-quay-repos"}]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "domaudit"
+
+podAnnotations: {}
+
+podLabels: {}
+
+podEnv: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: 
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: 
+  dominodatalab.com/node-pool: platform
+
+tolerations: []
+
+affinity: {}
+
+ingress:
+  class: nginx
+  enabled: false
+  paths:
+    - "domaudit-api"
+  host: domino.comany.com
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+
+istio:
+  enabled: false
+
+clusterDomain: "cluster.local"
+
+ui:
+  config:
+    port: 8999
+  service:
+    type: ClusterIP
+    port: 80
+  resources: 
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi  
+  ingress:
+    class: nginx
+    enabled: true
+    path: "domaudit-ui"
+    host: domino.comany.com
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+
+# Parallel http threads allowed
+http_threads: 10

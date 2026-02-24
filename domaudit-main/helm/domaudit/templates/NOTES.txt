@@ -1,0 +1,13 @@
+{{- if .Values.ui.ingress.enabled }}
+Domaudit Application URL:
+https://{{ .Values.ui.ingress.host }}/{{ .Values.ui.ingress.path }}
+{{- end}}
+
+{{- if .Values.ingress.enabled }}
+--------
+Domaudit API url:
+{{- range $paths := .Values.ingress.paths}}
+https://{{ $.Values.ingress.host }}/{{ $paths }}
+{{- end}}
+{{- end}}
+

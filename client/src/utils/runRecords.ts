@@ -31,6 +31,14 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
 
     const metadata = asRecord(ev.metadata);
     const eventRecord = asRecord(ev);
+
+    // domaudit-style nested objects from /v4/jobs response shape
+    const metaStatuses = asRecord(metadata['statuses']);
+    const metaStageTime = asRecord(metadata['stageTime']);
+    const metaEnvironment = asRecord(metadata['environment']);
+    const metaStartedBy = asRecord(metadata['startedBy']);
+    const metaHardwareTier = asRecord(metadata['hardwareTier']);
+
     const command = firstString(
       eventRecord['command'],
       metadata['runCommand'],
@@ -38,14 +46,19 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
       metadata['jobRunCommand'],
       metadata['commandToRun'],
       metadata['commandLine'],
-      metadata['entrypoint']
+      metadata['entrypoint'],
+      metadata['commandString']
     );
     const environmentName = firstString(
       eventRecord['environmentName'],
       metadata['environmentName'],
-      metadata['environment'],
+      deepString(metaEnvironment, 'environmentName'),
+      typeof metadata['environment'] === 'string' ? metadata['environment'] : undefined,
       metadata['environmentRevisionName'],
-      metadata['environmentDisplayName']
+      metadata['environmentDisplayName'],
+      metadata['environment_1'],
+      metadata['environment_0'],
+      ...metadataKeysWithPrefix(metadata, 'environment')
     );
     const computeTier = firstString(
       eventRecord['computeTier'],
@@ -56,22 +69,36 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
     );
     const hardwareTier = firstString(
       eventRecord['hardwareTier'],
-      metadata['hardwareTier'],
       metadata['hardwareTierName'],
-      metadata['hardware']
+      deepString(metaHardwareTier, 'name'),
+      deepString(metaHardwareTier, 'hardwareTierName'),
+      typeof metadata['hardwareTier'] === 'string' ? metadata['hardwareTier'] : undefined,
+      metadata['hardware'],
+      metadata['hardwareTier_1'],
+      metadata['hardwareTier_0'],
+      ...metadataKeysWithPrefix(metadata, 'hardwareTier')
     );
     const runId = firstString(
       eventRecord['runId'],
       metadata['runId'],
       metadata['executionId'],
+      ev.targetType?.toLowerCase() === 'run' || ev.targetType?.toLowerCase() === 'job' ? ev.targetId : undefined,
       ev.targetId
     );
     const runFile = firstString(metadata['runFile'], metadata['filename']);
-    const runOrigin = firstString(metadata['runOrigin'], metadata['source']);
+    const runOrigin = firstString(metadata['runOrigin'], metadata['source'], metadata['origin']);
     const status =
-      firstString(eventRecord['status'], metadata['status'], metadata['runStatus']) ??
-      inferStatusFromEvent(ev.event);
-    const durationSec = firstNumber(
+      firstString(
+        eventRecord['status'],
+        metadata['status'],
+        metadata['runStatus'],
+        metadata['executionStatus'],
+        deepString(metaStatuses, 'executionStatus'),
+        metadata['currentStatus'],
+      ) ?? inferStatusFromEvent(ev.event);
+
+    // Duration: explicit fields first, then calculate from stageTime timestamps
+    let durationSec = firstNumber(
       eventRecord['durationSec'],
       metadata['runDurationSec'],
       metadata['runDurationSeconds'],
@@ -79,7 +106,14 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
       metadata['durationSec'],
       metadata['durationSeconds']
     );
-    const user = firstString(ev.actorName, ev.actorId) ?? 'Unknown';
+    if (durationSec == null) {
+      const completedMs = firstNumber(metaStageTime['completedTime']);
+      const startMs = firstNumber(metaStageTime['runStartTime']);
+      if (completedMs != null && startMs != null && completedMs > startMs) {
+        durationSec = (completedMs - startMs) / 1000;
+      }
+    }
+    const user = firstString(ev.actorName, deepString(metaStartedBy, 'username'), ev.actorId) ?? 'Unknown';
     const project = firstString(ev.withinProjectName, ev.withinProjectId) ?? 'Unknown';
     const usageClass = inferUsageClass(command ?? runFile, environmentName);
     const ts = typeof ev.timestamp === 'number' ? ev.timestamp : 0;
@@ -116,6 +150,21 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
+/** Values from metadata keys that start with prefix (e.g. environment_1, hardwareTier_0). SWAG/audit often use numeric suffixes. */
+function metadataKeysWithPrefix(meta: Record<string, unknown>, prefix: string): unknown[] {
+  const out: unknown[] = [];
+  for (const [k, v] of Object.entries(meta)) {
+    if (typeof k === 'string' && k.startsWith(prefix) && typeof v === 'string' && v.trim()) out.push(v.trim());
+  }
+  return out;
+}
+
+/** Safely read a string property from a nested object (domaudit-style deep field access). */
+function deepString(obj: Record<string, unknown>, key: string): string | undefined {
+  const v = obj[key];
+  return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+}
+
 function firstString(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) return value.trim();
@@ -134,11 +183,15 @@ function firstNumber(...values: unknown[]): number | null {
   return null;
 }
 
+/** Map audit event names to run status using SWAG/API patterns (e.g. RunMonolithDTO status enum, execution lifecycle). */
 function inferStatusFromEvent(eventName: string | undefined): string {
   const name = (eventName ?? '').toLowerCase();
-  if (name.includes('fail') || name.includes('error')) return 'Failed';
-  if (name.includes('stop')) return 'Stopped';
-  if (name.includes('start') || name.includes('launch')) return 'Started';
+  if (name.includes('fail') || name.includes('error') || name.includes('fault')) return 'Failed';
+  if (name.includes('stop') || name.includes('discard')) return 'Stopped';
+  if (name.includes('succeed') || name.includes('complete') || name.includes('finish') || name.includes('publish')) return 'Succeeded';
+  if (name.includes('start') || name.includes('launch') || name.includes('run')) return 'Started';
+  if (name.includes('queue') || name.includes('schedule')) return 'Queued';
+  if (name.includes('pull') || name.includes('build') || name.includes('prepar') || name.includes('mount') || name.includes('synchronize')) return 'Running';
   return 'Unknown';
 }
 

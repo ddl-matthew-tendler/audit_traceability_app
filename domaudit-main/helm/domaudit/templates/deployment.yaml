@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "domaudit.fullname" . }}
+  labels:
+    {{- include "domaudit.labels" . | nindent 4 }}
+    {{- if .Values.istio.enabled }}
+    security.istio.io/tlsMode: "istio"
+    {{- end}}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "domaudit.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "domaudit.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        mongodb-replicaset-client: "true"
+        git-client: "true"
+        keycloak-client: "true"
+        fluentd-client: "true"
+        nucleus-client: "true"
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "domaudit.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: domaudit-ui
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command:
+            - gunicorn
+            - -b
+            - 0.0.0.0:{{ .Values.ui.config.port }}
+            - domaudit_ui.app:create_app()
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: ui-http
+              containerPort: {{ .Values.ui.config.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.ui.resources | nindent 12 }}
+          env:
+            {{- with .Values.podEnv }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            - name: UI_PORT
+              value: "{{ .Values.ui.config.port }}"
+            - name: DOMINO_API_HOST
+              value: "http://nucleus-frontend.{{ .Release.Namespace }}:80"
+            - name: DOMINO_AUDIT_HOST
+              value: "http://localhost:{{ .Values.config.port }}"
+            {{- if .Values.ui.ingress.enabled }}
+            - name: DOMINO_PROXY_PATH
+              value: {{ .Values.ui.ingress.path }}
+            {{- end}}
+        - name: domaudit
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          command:
+            - gunicorn
+            - domaudit.domaudit:create_app()
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz/live
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /healthz/ready
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            {{- with .Values.podEnv }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            - name: FLASK_RUN_PORT
+              value: "{{ .Values.config.port }}"
+            - name: DOMINO_API_HOST
+              value: "http://nucleus-frontend.{{ .Release.Namespace }}:80"
+            - name: GIT_HOST
+              value: "git.{{ .Release.Namespace }}:80"
+            - name: MONGO_HOST
+              value: "mongodb-replicaset.{{ .Release.Namespace }}:27017"
+            - name: KEYCLOAK_HOST
+              value: "keycloak-http.{{ .Release.Namespace }}:80"
+            - name: PROJECT_AUDIT_HTTP_THREAD_COUNT
+              value: "{{ .Values.http_threads }}"
+            - name: GIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: domino-git-repo
+            - name: GIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: api-key
+                  name: domino-git-repo
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: user
+                  name: mongodb-replicaset-admin
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: mongodb-replicaset-admin
+            - name: KEYCLOAK_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: keycloak-http
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: keycloak-http
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
