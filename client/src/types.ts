@@ -5,17 +5,23 @@ export interface AuditEvent {
   timestamp: number; // ms
   actorId?: string;
   actorName?: string;
+  actorFirstName?: string;
+  actorLastName?: string;
   targetType?: string;
   targetId?: string;
   targetName?: string;
   withinProjectId?: string;
   withinProjectName?: string;
+  eventSource?: string;
+  traceId?: string;
+  electronicallySigned?: boolean;
   metadata?: Record<string, unknown>;
   command?: string;
   status?: string;
   durationSec?: number;
   computeTier?: string;
   hardwareTier?: string;
+  hardwareTierId?: string;
   environmentName?: string;
   runId?: string;
   jobId?: string;

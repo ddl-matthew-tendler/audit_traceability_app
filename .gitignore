@@ -61,6 +61,7 @@ Thumbs.db
 
 # Audit exports (may contain secrets; do not commit)
 audit_full_metadata_friendly_*.csv
+raw_audit_events*.json
 
 # Environment variables
 .env

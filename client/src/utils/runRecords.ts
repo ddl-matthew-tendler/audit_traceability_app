@@ -32,6 +32,18 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
 
     const metadata = asRecord(ev.metadata);
     const eventRecord = asRecord(ev);
+    const rawData = asRecord(ev.raw);
+
+    // affecting[] contains related entities (environment, hardwareTier) in the raw audit event.
+    const affecting = Array.isArray(rawData['affecting']) ? rawData['affecting'] as Record<string, unknown>[] : [];
+    let affectingEnvName: string | undefined;
+    let affectingHwName: string | undefined;
+    for (const aff of affecting) {
+      if (!aff || typeof aff !== 'object') continue;
+      const etype = String(aff['entityType'] ?? '').toLowerCase();
+      if (etype === 'environment' && !affectingEnvName) affectingEnvName = typeof aff['name'] === 'string' ? aff['name'] : undefined;
+      if (etype === 'hardwaretier' && !affectingHwName) affectingHwName = typeof aff['name'] === 'string' ? aff['name'] : undefined;
+    }
 
     // domaudit-style nested objects from /v4/jobs response shape
     const metaStatuses = asRecord(metadata['statuses']);
@@ -40,62 +52,89 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
     const metaStartedBy = asRecord(metadata['startedBy']);
     const metaHardwareTier = asRecord(metadata['hardwareTier']);
 
+    // Case-insensitive metadata lookup: Domino's Audit Trail "Custom Attributes" use
+    // title-case keys with spaces ("Run Command", "Hardware Tier", "Environment", "Run").
+    const ci = buildCiLookup(metadata);
+
     const command = firstString(
       eventRecord['command'],
+      metadata['Run Command'],
       metadata['runCommand'],
       metadata['command'],
       metadata['jobRunCommand'],
       metadata['commandToRun'],
       metadata['commandLine'],
       metadata['entrypoint'],
-      metadata['commandString']
+      metadata['commandString'],
+      ci('runcommand'),
+      ci('command')
     );
     const environmentName = firstString(
       eventRecord['environmentName'],
+      affectingEnvName,
+      metadata['Environment'],
       metadata['environmentName'],
       deepString(metaEnvironment, 'environmentName'),
       typeof metadata['environment'] === 'string' ? metadata['environment'] : undefined,
       metadata['environmentRevisionName'],
       metadata['environmentDisplayName'],
-      metadata['environment_1'],
-      metadata['environment_0'],
-      ...metadataKeysWithPrefix(metadata, 'environment')
+      ci('environment'),
+      ci('environmentname')
     );
     const computeTier = firstString(
       eventRecord['computeTier'],
+      metadata['Compute Tier'],
       metadata['computeTier'],
       metadata['computeSize'],
       metadata['tier'],
-      metadata['machineSize']
+      metadata['machineSize'],
+      ci('computetier')
     );
     const hardwareTier = firstString(
       eventRecord['hardwareTier'],
+      affectingHwName,
+      metadata['Hardware Tier'],
       metadata['hardwareTierName'],
       deepString(metaHardwareTier, 'name'),
       deepString(metaHardwareTier, 'hardwareTierName'),
       typeof metadata['hardwareTier'] === 'string' ? metadata['hardwareTier'] : undefined,
       metadata['hardware'],
-      metadata['hardwareTier_1'],
-      metadata['hardwareTier_0'],
-      ...metadataKeysWithPrefix(metadata, 'hardwareTier')
+      ci('hardwaretier')
     );
     const runId = firstString(
       eventRecord['runId'],
+      metadata['Run'],
       metadata['runId'],
       metadata['executionId'],
       ev.targetType?.toLowerCase() === 'run' || ev.targetType?.toLowerCase() === 'job' ? ev.targetId : undefined,
-      ev.targetId
+      ev.targetId,
+      ci('run'),
+      ci('runid')
     );
-    const runFile = firstString(metadata['runFile'], metadata['filename']);
-    const runOrigin = firstString(metadata['runOrigin'], metadata['source'], metadata['origin']);
+    const runFile = firstString(
+      metadata['Run File'],
+      metadata['runFile'],
+      metadata['filename'],
+      ci('runfile')
+    );
+    const runOrigin = firstString(
+      metadata['Run Origin'],
+      metadata['runOrigin'],
+      metadata['source'],
+      metadata['origin'],
+      ci('runorigin')
+    );
     const status =
       firstString(
         eventRecord['status'],
+        metadata['Execution Status'],
         metadata['status'],
         metadata['runStatus'],
         metadata['executionStatus'],
         deepString(metaStatuses, 'executionStatus'),
         metadata['currentStatus'],
+        ci('executionstatus'),
+        ci('status')
       ) ?? inferStatusFromEvent(ev.event);
 
     // Duration: explicit fields first, then calculate from stageTime timestamps
@@ -116,9 +155,11 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
     }
     const runType = firstString(
       eventRecord['runType'],
+      metadata['Run Type'],
       metadata['runType'],
       metadata['executionType'],
-      metadata['workloadType']
+      metadata['workloadType'],
+      ci('runtype')
     );
     const user = firstString(ev.actorName, deepString(metaStartedBy, 'username'), ev.actorId) ?? 'Unknown';
     const project = firstString(ev.withinProjectName, ev.withinProjectId) ?? 'Unknown';
@@ -158,19 +199,25 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
 
-/** Values from metadata keys that start with prefix (e.g. environment_1, hardwareTier_0). SWAG/audit often use numeric suffixes. */
-function metadataKeysWithPrefix(meta: Record<string, unknown>, prefix: string): unknown[] {
-  const out: unknown[] = [];
-  for (const [k, v] of Object.entries(meta)) {
-    if (typeof k === 'string' && k.startsWith(prefix) && typeof v === 'string' && v.trim()) out.push(v.trim());
-  }
-  return out;
-}
-
 /** Safely read a string property from a nested object (domaudit-style deep field access). */
 function deepString(obj: Record<string, unknown>, key: string): string | undefined {
   const v = obj[key];
   return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+}
+
+/**
+ * Build a case-insensitive lookup for metadata keys.
+ * Domino Audit Trail "Custom Attributes" use title-case keys with spaces
+ * (e.g. "Run Command", "Hardware Tier"), while code may use camelCase or snake_case.
+ */
+function buildCiLookup(meta: Record<string, unknown>): (normalizedKey: string) => string | undefined {
+  const map = new Map<string, string>();
+  for (const [k, v] of Object.entries(meta)) {
+    if (typeof k === 'string' && typeof v === 'string' && v.trim()) {
+      map.set(k.toLowerCase().replace(/[\s_-]/g, ''), v.trim());
+    }
+  }
+  return (normalizedKey: string) => map.get(normalizedKey.toLowerCase().replace(/[\s_-]/g, ''));
 }
 
 function firstString(...values: unknown[]): string | null {

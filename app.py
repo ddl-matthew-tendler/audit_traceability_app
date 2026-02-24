@@ -110,7 +110,8 @@ def get_domino_host() -> str | None:
 def _normalize_audit_event(raw: dict) -> dict:
     """
     Map Admin Guide API event shape to our frontend format.
-    API uses: actor.{name}, action.{eventName}, in.{name}, targets[].entity, timestamp.
+    API uses: actor.{name}, action.{eventName}, in.{name}, targets[].entity,
+    affecting[] (contains environment + hardwareTier entities), timestamp.
     """
     actor = raw.get("actor") or {}
     action = raw.get("action") or {}
@@ -118,9 +119,62 @@ def _normalize_audit_event(raw: dict) -> dict:
     targets = raw.get("targets") or []
     first_target = targets[0] if targets else {}
     entity = first_target.get("entity") or {}
-    metadata = raw.get("metadata") or {}
-    if not isinstance(metadata, dict):
-        metadata = {}
+
+    # affecting[] contains related entities: environment, hardwareTier, dataset, etc.
+    affecting = raw.get("affecting") or []
+    affecting_env_name = None
+    affecting_hw_name = None
+    affecting_hw_id = None
+    for aff in affecting:
+        if not isinstance(aff, dict):
+            continue
+        etype = (aff.get("entityType") or "").lower()
+        if etype == "environment" and not affecting_env_name:
+            affecting_env_name = aff.get("name")
+        elif etype == "hardwaretier" and not affecting_hw_name:
+            affecting_hw_name = aff.get("name")
+            affecting_hw_id = aff.get("id")
+
+    # Build unified metadata: merge from raw.metadata, targets[0].customAttributes,
+    # targets[0].attributes, targets[0].properties — Domino stores "Custom Attributes"
+    # (visible in the Audit Trail UI) in one of these locations.
+    metadata: dict = {}
+    for source in [
+        raw.get("metadata"),
+        first_target.get("customAttributes"),
+        first_target.get("attributes"),
+        first_target.get("properties"),
+        entity.get("customAttributes"),
+        entity.get("attributes"),
+        entity.get("properties"),
+    ]:
+        if isinstance(source, dict):
+            metadata.update(source)
+        elif isinstance(source, list):
+            for item in source:
+                if isinstance(item, dict):
+                    k = item.get("key") or item.get("name") or item.get("attribute")
+                    v = item.get("value")
+                    if k and v is not None:
+                        metadata[str(k)] = v
+
+    # Expand affecting[] entities into metadata (same approach as the Streamlit exporter:
+    # environment_1, hardwareTier_1, dataset_1, etc.)
+    type_counters: dict[str, int] = {}
+    for aff in affecting:
+        if not isinstance(aff, dict):
+            continue
+        etype = aff.get("entityType", "entity")
+        aname = aff.get("name", "")
+        type_counters[etype] = type_counters.get(etype, 0) + 1
+        if aname:
+            metadata[f"{etype}_{type_counters[etype]}"] = aname
+
+    # Build a case-insensitive lookup: "Run Command" -> value, "run command" -> same value, etc.
+    _meta_lower: dict[str, str] = {}
+    for k, v in metadata.items():
+        if isinstance(k, str) and isinstance(v, str) and v.strip():
+            _meta_lower[k.lower().replace(" ", "").replace("_", "").replace("-", "")] = v.strip()
 
     def _first_non_empty(*values):
         for value in values:
@@ -138,6 +192,10 @@ def _normalize_audit_event(raw: dict) -> dict:
                 except ValueError:
                     continue
         return None
+
+    def _ci(key: str) -> str | None:
+        """Case-insensitive metadata lookup: normalizes key to match 'Run Command' / 'runCommand' / 'run_command' etc."""
+        return _meta_lower.get(key.lower().replace(" ", "").replace("_", "").replace("-", ""))
 
     def _metadata_first_match(meta: dict, prefix: str):
         """Return tuple of string values from metadata keys starting with prefix (e.g. environment_1)."""
@@ -172,6 +230,26 @@ def _normalize_audit_event(raw: dict) -> dict:
     if isinstance(completed_ms, (int, float)) and isinstance(start_ms, (int, float)) and completed_ms > start_ms:
         stage_duration = (completed_ms - start_ms) / 1000.0
 
+    # Infer runType from event name when no explicit value in metadata.
+    event_name = (action.get("eventName") or "").lower()
+    entity_type = (entity.get("entityType") or "").lower()
+    inferred_run_type = None
+    if "workspace" in event_name or entity_type == "workspace":
+        inferred_run_type = "Workspace"
+    elif "job" in event_name or entity_type == "job":
+        inferred_run_type = "Job"
+    elif "app" in event_name:
+        inferred_run_type = "App"
+    elif "run" in event_name or entity_type == "run":
+        inferred_run_type = "Run"
+
+    # For workspace events, use the workspace name as command hint if no explicit command.
+    workspace_name = entity.get("name") if entity_type == "workspace" else None
+
+    # Event source from action.using[] (e.g. "API", "Web")
+    using = action.get("using") or []
+    event_source = ", ".join(u.get("id", "") for u in using if isinstance(u, dict) and u.get("id")) or None
+
     return {
         "id": raw.get("id"),
         "event": action.get("eventName") or raw.get("event") or "",
@@ -182,36 +260,48 @@ def _normalize_audit_event(raw: dict) -> dict:
             _deep_get(metadata, "startedBy", "username"),
             meta_started_by.get("username"),
         ),
+        "actorFirstName": actor.get("firstName"),
+        "actorLastName": actor.get("lastName"),
         "targetType": entity.get("entityType") or raw.get("targetType"),
         "targetId": entity.get("id") or raw.get("targetId"),
         "targetName": entity.get("name") or raw.get("targetName"),
         "withinProjectId": context_in.get("id") or raw.get("withinProjectId"),
         "withinProjectName": context_in.get("name") or raw.get("withinProjectName"),
+        "eventSource": event_source,
+        "traceId": action.get("traceId"),
+        "electronicallySigned": action.get("electronicallySigned"),
         "metadata": metadata,
-        # Best-effort execution fields used by metrics views (remain optional).
         "command": _first_non_empty(
             raw.get("command"),
+            metadata.get("Run Command"),
             metadata.get("runCommand"),
             metadata.get("command"),
             metadata.get("jobRunCommand"),
             metadata.get("commandToRun"),
             metadata.get("commandLine"),
             metadata.get("entrypoint"),
+            _ci("runcommand"),
+            _ci("command"),
+            workspace_name,
         ),
         "status": _first_non_empty(
             raw.get("status"),
+            metadata.get("Execution Status"),
             metadata.get("status"),
             metadata.get("runStatus"),
             metadata.get("executionStatus"),
             meta_statuses.get("executionStatus"),
             metadata.get("currentStatus"),
             _deep_get(metadata, "data", "currentStatus"),
+            _ci("executionstatus"),
+            _ci("status"),
         ),
         "durationSec": _first_number(
             raw.get("durationSec"),
             metadata.get("runDurationSec"),
             metadata.get("runDurationSeconds"),
             metadata.get("runDurationInSeconds"),
+            metadata.get("Run Duration"),
             stage_duration,
         ),
         "computeTier": _first_non_empty(
@@ -223,47 +313,69 @@ def _normalize_audit_event(raw: dict) -> dict:
         ),
         "hardwareTier": _first_non_empty(
             raw.get("hardwareTier"),
+            affecting_hw_name,
+            metadata.get("Hardware Tier"),
             metadata.get("hardwareTierName"),
             meta_hardware.get("name") if isinstance(meta_hardware, dict) else (metadata.get("hardwareTier") if isinstance(metadata.get("hardwareTier"), str) else None),
             metadata.get("hardware"),
-            metadata.get("hardwareTier_1"),
-            metadata.get("hardwareTier_0"),
-            *(_metadata_first_match(metadata, "hardwareTier") or ()),
+            _ci("hardwaretier"),
         ),
+        "hardwareTierId": affecting_hw_id,
         "environmentName": _first_non_empty(
             raw.get("environmentName"),
+            affecting_env_name,
+            metadata.get("Environment"),
             metadata.get("environmentName"),
             meta_environment.get("environmentName"),
             metadata.get("environment") if isinstance(metadata.get("environment"), str) else None,
             metadata.get("environmentRevisionName"),
             metadata.get("environmentDisplayName"),
-            metadata.get("environment_1"),
-            metadata.get("environment_0"),
-            *(_metadata_first_match(metadata, "environment") or ()),
+            _ci("environment"),
+            _ci("environmentname"),
         ),
         "runId": _first_non_empty(
             raw.get("runId"),
+            metadata.get("Run"),
             metadata.get("runId"),
             metadata.get("executionId"),
             entity.get("id") if (entity.get("entityType") or "").lower() in ("run", "job") else None,
+            _ci("run"),
+            _ci("runid"),
         ),
         "jobId": _first_non_empty(
             metadata.get("jobId"),
+            metadata.get("Job"),
             entity.get("id") if (entity.get("entityType") or "").lower() == "job" else None,
+            _ci("jobid"),
         ),
         "runType": _first_non_empty(
+            metadata.get("Run Type"),
             metadata.get("runType"),
             metadata.get("executionType"),
             metadata.get("workloadType"),
+            _ci("runtype"),
+            inferred_run_type,
         ),
-        "runFile": _first_non_empty(raw.get("runFile"), metadata.get("runFile"), metadata.get("filename")),
-        "runOrigin": _first_non_empty(raw.get("runOrigin"), metadata.get("runOrigin"), metadata.get("source")),
-        # Lightweight raw snapshot for future extraction/debugging.
+        "runFile": _first_non_empty(
+            raw.get("runFile"),
+            metadata.get("Run File"),
+            metadata.get("runFile"),
+            metadata.get("filename"),
+            _ci("runfile"),
+        ),
+        "runOrigin": _first_non_empty(
+            raw.get("runOrigin"),
+            metadata.get("Run Origin"),
+            metadata.get("runOrigin"),
+            metadata.get("source"),
+            _ci("runorigin"),
+        ),
         "raw": {
             "id": raw.get("id"),
             "action": raw.get("action"),
             "in": raw.get("in"),
             "targets": raw.get("targets"),
+            "affecting": raw.get("affecting"),
             "source": raw.get("source"),
         },
     }
@@ -720,6 +832,29 @@ async def audit(request: Request):
 
         # Parse first page (data already from successful request in loop)
         raw_events = _parse_events_from_response(data)
+
+        # Diagnostic: log raw structure of a sample event to identify where custom attributes live.
+        import json as _json
+        for _sample in raw_events[:3]:
+            if isinstance(_sample, dict):
+                _keys = list(_sample.keys())
+                _log(f"RAW EVENT TOP-LEVEL KEYS: {_keys}")
+                _targets = _sample.get("targets", [])
+                if _targets and isinstance(_targets[0], dict):
+                    _target_keys = list(_targets[0].keys())
+                    _log(f"RAW EVENT targets[0] KEYS: {_target_keys}")
+                    for _tk in _target_keys:
+                        val = _targets[0][_tk]
+                        if isinstance(val, dict):
+                            _log(f"  targets[0][{_tk!r}] dict keys: {list(val.keys())[:20]}")
+                        elif isinstance(val, list) and val:
+                            _log(f"  targets[0][{_tk!r}] list[0] type={type(val[0]).__name__} keys={list(val[0].keys())[:20] if isinstance(val[0], dict) else 'n/a'}")
+                _meta = _sample.get("metadata")
+                if isinstance(_meta, dict):
+                    _log(f"RAW EVENT metadata keys: {list(_meta.keys())[:30]}")
+                    _log(f"RAW EVENT metadata sample: {_json.dumps(dict(list(_meta.items())[:10]), default=str)[:500]}")
+                break
+
         all_events = [_normalize_audit_event(ev) for ev in raw_events if isinstance(ev, dict)]
 
         # Paginate if client asked for more than one page
@@ -762,6 +897,24 @@ async def audit(request: Request):
 async def health():
     """Lightweight health check for Domino readiness probes. Returns immediately."""
     return {"status": "ok"}
+
+
+@app.get("/api/audit/raw-sample")
+async def audit_raw_sample(request: Request):
+    """Return 5 raw (un-normalized) audit events so we can inspect the actual key structure."""
+    base = AUDIT_API_HOST
+    headers = await _get_auth_headers(request)
+    paths = [AUDIT_API_PATH] + AUDIT_API_FALLBACK_PATHS
+    for path in paths:
+        url = f"{base}{path}" if path.startswith("/") else f"{base}/{path}"
+        try:
+            r = requests.get(url, params={"limit": "5"}, headers=headers, timeout=15)
+            if r.ok:
+                raw_events = _parse_events_from_response(r.json())
+                return JSONResponse(raw_events[:5])
+        except Exception:
+            continue
+    return JSONResponse({"error": "Could not fetch audit events"}, status_code=502)
 
 
 @app.get("/api/test")
