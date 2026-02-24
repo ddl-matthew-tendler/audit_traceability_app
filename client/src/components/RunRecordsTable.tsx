@@ -2,11 +2,18 @@ import { format } from 'date-fns';
 import type { AuditEvent } from '../types';
 import type { RunRecord } from '../utils/runRecords';
 import { formatDuration } from '../utils/runRecords';
+import { UnknownBadge } from './UnknownBadge';
+import { UsageClassInfo } from './UsageClassInfo';
 
 interface RunRecordsTableProps {
   rows: RunRecord[];
   onSelectEvent: (event: AuditEvent) => void;
   emptyLabel?: string;
+}
+
+function CellValue({ value, field, record }: { value: string; field: string; record: RunRecord }) {
+  if (value === 'Unknown') return <UnknownBadge field={field} record={record} />;
+  return <>{value}</>;
 }
 
 export function RunRecordsTable({
@@ -32,7 +39,9 @@ export function RunRecordsTable({
             <th className="px-3 py-2 font-medium">Hardware tier</th>
             <th className="px-3 py-2 font-medium">Environment</th>
             <th className="px-3 py-2 font-medium">Run type</th>
-            <th className="px-3 py-2 font-medium">Usage</th>
+            <th className="px-3 py-2 font-medium">
+              <span className="inline-flex items-center gap-1">Usage <UsageClassInfo compact /></span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -43,19 +52,21 @@ export function RunRecordsTable({
               onClick={() => onSelectEvent(row.sourceEvent)}
             >
               <td className="px-3 py-2">{row.timestamp ? format(row.timestamp, 'PP p') : 'Unknown'}</td>
-              <td className="px-3 py-2">{formatDuration(row.durationSec)}</td>
-              <td className="px-3 py-2">{row.status}</td>
-              <td className="px-3 py-2">{row.user}</td>
-              <td className="px-3 py-2">{row.project}</td>
-              <td className="max-w-[260px] truncate px-3 py-2" title={row.command}>
-                {row.command}
+              <td className="px-3 py-2">
+                {row.durationSec == null ? <UnknownBadge field="duration" record={row} /> : formatDuration(row.durationSec)}
               </td>
-              <td className="px-3 py-2">{row.hardwareTier}</td>
-              <td className="max-w-[220px] truncate px-3 py-2" title={row.environmentName}>
-                {row.environmentName}
+              <td className="px-3 py-2"><CellValue value={row.status} field="status" record={row} /></td>
+              <td className="px-3 py-2"><CellValue value={row.user} field="user" record={row} /></td>
+              <td className="px-3 py-2"><CellValue value={row.project} field="project" record={row} /></td>
+              <td className="max-w-[260px] truncate px-3 py-2" title={row.command !== 'Unknown' ? row.command : undefined}>
+                <CellValue value={row.command} field="command" record={row} />
               </td>
-              <td className="px-3 py-2">{row.runType}</td>
-              <td className="px-3 py-2">{row.usageClass}</td>
+              <td className="px-3 py-2"><CellValue value={row.hardwareTier} field="hardwareTier" record={row} /></td>
+              <td className="max-w-[220px] truncate px-3 py-2" title={row.environmentName !== 'Unknown' ? row.environmentName : undefined}>
+                <CellValue value={row.environmentName} field="environmentName" record={row} />
+              </td>
+              <td className="px-3 py-2"><CellValue value={row.runType} field="runType" record={row} /></td>
+              <td className="px-3 py-2"><CellValue value={row.usageClass} field="usageClass" record={row} /></td>
             </tr>
           ))}
         </tbody>

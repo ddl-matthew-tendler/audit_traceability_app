@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useAppStore, type ViewMode } from '../store/useAppStore';
 import { TimeRangePicker, type TimeRange } from './TimeRangePicker';
+import { ScheduleReportModal } from './ScheduleReportModal';
 
 const VIEW_LABELS: { id: ViewMode; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -30,6 +32,7 @@ export function Toolbar({
   isLoading,
 }: ToolbarProps) {
   const { viewMode, setViewMode, useMockData, setUseMockData } = useAppStore();
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   return (
     <>
@@ -53,9 +56,16 @@ export function Toolbar({
             />
             <span className="text-[#3F4547]">Demo data</span>
           </label>
-          <span className="text-sm text-[#7F8385]">
-            Refresh your browser for the latest data.
-          </span>
+          <button
+            type="button"
+            onClick={() => setScheduleModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded border border-[#543FDE] bg-[#543FDE] px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#3B23D1]"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Schedule Report
+          </button>
         </div>
       </header>
 
@@ -81,6 +91,8 @@ export function Toolbar({
           {eventCount.toLocaleString()} events · Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : '—'}
         </span>
       </div>
+
+      <ScheduleReportModal open={scheduleModalOpen} onClose={() => setScheduleModalOpen(false)} />
     </>
   );
 }

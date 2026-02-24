@@ -9,6 +9,8 @@ import { DOMINO_COLORS } from '../utils/highchartsTheme';
 import { RunRecordsTable } from './RunRecordsTable';
 import { DetailPanel } from './DetailPanel';
 import { exportToCsv } from '../utils/csvExport';
+import { UnknownCountBadge } from './UnknownBadge';
+import { UsageClassInfo } from './UsageClassInfo';
 
 interface JobRunsViewProps {
   events: AuditEvent[];
@@ -228,7 +230,16 @@ export function JobRunsView({ events, timeRange }: JobRunsViewProps) {
             )}
           </div>
           <div className="rounded-lg border border-[#DBE4E8] bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-base font-medium text-[#3F4547]">By usage class</h3>
+            <h3 className="mb-4 flex items-center gap-2 text-base font-medium text-[#3F4547]">
+              By usage class <UsageClassInfo />
+              {usageBreakdown.some((d) => d.name === 'Unknown') && (
+                <UnknownCountBadge
+                  field="usageClass"
+                  unknownCount={usageBreakdown.find((d) => d.name === 'Unknown')?.y ?? 0}
+                  totalCount={filtered.length}
+                />
+              )}
+            </h3>
             {usageBreakdown.length > 0 ? (
               <HighchartsReact highcharts={Highcharts} options={usageBreakdownOptions} />
             ) : (
@@ -247,7 +258,7 @@ export function JobRunsView({ events, timeRange }: JobRunsViewProps) {
           <Select value={userFilter} onChange={setUserFilter} options={options.users} label="User" />
           <Select value={projectFilter} onChange={setProjectFilter} options={options.projects} label="Project" />
           <Select value={statusFilter} onChange={setStatusFilter} options={options.statuses} label="Status" />
-          <Select value={usageFilter} onChange={setUsageFilter} options={options.usages} label="Usage class" />
+          <Select value={usageFilter} onChange={setUsageFilter} options={options.usages} label="Usage class" infoIcon={<UsageClassInfo compact />} />
         </div>
 
         <div className="mb-4 flex items-center justify-between">
@@ -276,12 +287,13 @@ interface SelectProps {
   onChange: (v: string) => void;
   options: string[];
   label: string;
+  infoIcon?: React.ReactNode;
 }
 
-function Select({ value, onChange, options, label }: SelectProps) {
+function Select({ value, onChange, options, label, infoIcon }: SelectProps) {
   return (
     <label className="flex flex-col gap-1 text-xs text-[#7F8385]">
-      {label}
+      <span className="inline-flex items-center gap-1">{label}{infoIcon}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

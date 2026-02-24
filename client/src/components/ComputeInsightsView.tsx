@@ -6,6 +6,7 @@ import { extractRunRecords, formatDuration, percentile } from '../utils/runRecor
 import { exportToCsv } from '../utils/csvExport';
 import { RunRecordsTable } from './RunRecordsTable';
 import { DetailPanel } from './DetailPanel';
+import { UnknownCountBadge } from './UnknownBadge';
 
 interface ComputeInsightsViewProps {
   events: AuditEvent[];
@@ -114,11 +115,24 @@ export function ComputeInsightsView({ events }: ComputeInsightsViewProps) {
           <Card label="Avg runtime" value={formatDuration(durationStats.avg)} />
           <Card label="P95 runtime" value={formatDuration(durationStats.p95)} />
           <Card label="Duration coverage" value={`${(durationStats.coverage * 100).toFixed(1)}%`} />
-          <Card
-            label="Failure rate"
-            value={failureRate.pct == null ? 'Unknown' : `${failureRate.pct.toFixed(1)}%`}
-            subtitle={`${failureRate.failed.toLocaleString()} failed / ${failureRate.known.toLocaleString()} known`}
-          />
+          <div className="rounded-lg border border-[#DBE4E8] bg-white p-4 shadow-sm">
+            <p className="flex items-center gap-1.5 text-sm text-[#7F8385]">
+              Failure rate
+              {records.length - failureRate.known > 0 && (
+                <UnknownCountBadge
+                  field="status"
+                  unknownCount={records.length - failureRate.known}
+                  totalCount={records.length}
+                />
+              )}
+            </p>
+            <p className="mt-1 text-xl font-semibold text-[#3F4547]">
+              {failureRate.pct == null ? 'N/A' : `${failureRate.pct.toFixed(1)}%`}
+            </p>
+            <p className="text-xs text-[#7F8385]">
+              {failureRate.failed.toLocaleString()} failed / {failureRate.known.toLocaleString()} known
+            </p>
+          </div>
         </div>
 
         <div className="mb-3 flex items-center gap-3">

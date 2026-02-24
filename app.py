@@ -1049,6 +1049,181 @@ async def me(request: Request):
         return JSONResponse({"error": str(e)}, status_code=502)
 
 
+REPORT_SCRIPT_COMMAND = "python generate_usage_report.py"
+
+
+@app.get("/api/schedule-report/config")
+async def schedule_report_config(request: Request):
+    """
+    Return the info needed to populate the schedule-report form:
+    current user (id, name, email), available hardware tiers, and project id.
+    """
+    base = get_domino_host()
+    if not base:
+        return JSONResponse({"error": "DOMINO_API_HOST not set"}, status_code=503)
+
+    try:
+        headers = await get_auth_headers(request)
+        headers["Accept"] = "application/json"
+    except Exception as e:
+        return JSONResponse({"error": f"Authentication failed: {e}"}, status_code=502)
+
+    user_info = {}
+    try:
+        r = requests.get(f"{base.rstrip('/')}/v4/users/self", headers=headers, timeout=10)
+        if r.ok:
+            user_info = r.json() if isinstance(r.json(), dict) else {}
+    except Exception as e:
+        _log(f"schedule-report config: failed to fetch user: {e}")
+
+    hardware_tiers = []
+    try:
+        r = requests.get(f"{base.rstrip('/')}/v4/hardwareTier", headers=headers, timeout=10)
+        if r.ok:
+            data = r.json()
+            if isinstance(data, list):
+                hardware_tiers = [
+                    {"id": t.get("hardwareTier", {}).get("id", t.get("id", "")),
+                     "name": t.get("hardwareTier", {}).get("name", t.get("name", "")),
+                     "cores": t.get("hardwareTier", {}).get("cores"),
+                     "memory": t.get("hardwareTier", {}).get("memory")}
+                    for t in data if isinstance(t, dict)
+                ]
+        if not hardware_tiers:
+            r2 = requests.get(f"{base.rstrip('/')}/hardwareTier", headers=headers, timeout=10)
+            if r2.ok:
+                data2 = r2.json()
+                if isinstance(data2, list):
+                    hardware_tiers = [
+                        {"id": t.get("id", ""), "name": t.get("name", ""),
+                         "cores": t.get("cores"), "memory": t.get("memory")}
+                        for t in data2 if isinstance(t, dict)
+                    ]
+    except Exception as e:
+        _log(f"schedule-report config: failed to fetch hardware tiers: {e}")
+
+    project_id = os.environ.get("DOMINO_PROJECT_ID", "")
+    project_name = os.environ.get("DOMINO_PROJECT_NAME", "")
+
+    return JSONResponse({
+        "user": {
+            "id": user_info.get("id") or user_info.get("userId", ""),
+            "userName": user_info.get("userName", ""),
+            "fullName": f'{user_info.get("firstName", "")} {user_info.get("lastName", "")}'.strip(),
+            "email": user_info.get("email", ""),
+        },
+        "hardwareTiers": hardware_tiers,
+        "projectId": project_id,
+        "projectName": project_name,
+    })
+
+
+@app.post("/api/schedule-report")
+async def schedule_report(request: Request):
+    """
+    Create a Domino scheduled job that generates and distributes a usage report.
+    Expects JSON body with: title, emails, frequency, dayOfWeek, hour, minute,
+    timezone, reportSections, hardwareTierId.
+    """
+    base = get_domino_host()
+    if not base:
+        return JSONResponse({"error": "DOMINO_API_HOST not set"}, status_code=503)
+
+    project_id = os.environ.get("DOMINO_PROJECT_ID", "")
+    if not project_id:
+        return JSONResponse(
+            {"error": "DOMINO_PROJECT_ID is not set. This action must be run from within a Domino project."},
+            status_code=503,
+        )
+
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Invalid JSON body"}, status_code=400)
+
+    title = body.get("title", "").strip()
+    emails = body.get("emails", [])
+    frequency = body.get("frequency", "weekly")
+    day_of_week = body.get("dayOfWeek", 1)      # 0=Sun, 1=Mon, ...
+    hour = body.get("hour", 8)
+    minute = body.get("minute", 0)
+    timezone_id = body.get("timezone", "America/New_York")
+    report_sections = body.get("reportSections", [])
+    hardware_tier_id = body.get("hardwareTierId", "small-k8s")
+    user_id = body.get("userId", "")
+
+    if not title:
+        return JSONResponse({"error": "Report name is required."}, status_code=400)
+    if not emails or not isinstance(emails, list):
+        return JSONResponse({"error": "At least one email recipient is required."}, status_code=400)
+    if not user_id:
+        return JSONResponse({"error": "User ID could not be determined."}, status_code=400)
+
+    # Build cron string
+    if frequency == "daily":
+        cron_string = f"{minute} {hour} * * *"
+        human_readable = f"Every day at {hour:02d}:{minute:02d}"
+    elif frequency == "monthly":
+        cron_string = f"{minute} {hour} 1 * *"
+        human_readable = f"First of every month at {hour:02d}:{minute:02d}"
+    else:
+        cron_string = f"{minute} {hour} * * {day_of_week}"
+        day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        human_readable = f"Every {day_names[day_of_week % 7]} at {hour:02d}:{minute:02d}"
+
+    sections_arg = ",".join(report_sections) if report_sections else "all"
+    emails_arg = ",".join(emails)
+    command = f'{REPORT_SCRIPT_COMMAND} --sections "{sections_arg}" --emails "{emails_arg}"'
+
+    payload = {
+        "title": title,
+        "command": command,
+        "schedule": {
+            "cronString": cron_string,
+            "isCustom": False,
+        },
+        "timezoneId": timezone_id,
+        "isPaused": False,
+        "allowConcurrentExecution": False,
+        "hardwareTierIdentifier": hardware_tier_id,
+        "environmentRevisionSpec": "ActiveRevision",
+        "scheduledByUserId": user_id,
+        "notifyOnCompleteEmailAddresses": emails,
+    }
+
+    try:
+        headers = await get_auth_headers(request)
+        headers["Accept"] = "application/json"
+        headers["Content-Type"] = "application/json"
+        url = f"{base.rstrip('/')}/v4/projects/{project_id}/scheduledjobs"
+        _log(f"POST scheduled job: {url} — {title} ({human_readable} {timezone_id})")
+        r = requests.post(url, json=payload, headers=headers, timeout=30)
+        try:
+            data = r.json()
+        except Exception:
+            data = r.text
+
+        if not r.ok:
+            err = data if isinstance(data, str) else str(data)
+            if len(err) > 500:
+                err = err[:500] + "..."
+            _log(f"POST scheduled job failed: {r.status_code} — {err[:300]}")
+            return JSONResponse({"error": f"Domino returned {r.status_code}: {err}"}, status_code=r.status_code)
+
+        _log(f"Scheduled job created: {data.get('id', '?')} — {title}")
+        return JSONResponse({
+            "success": True,
+            "scheduledJobId": data.get("id"),
+            "title": title,
+            "schedule": human_readable,
+            "timezone": timezone_id,
+            "emails": emails,
+        })
+    except Exception as e:
+        _log(f"POST /api/schedule-report error: {e}")
+        return JSONResponse({"error": str(e)}, status_code=502)
+
+
 # Mount static asset directory if dist exists (Vite outputs to dist/assets/)
 if DIST_PATH.exists() and (DIST_PATH / "assets").exists():
     app.mount("/assets", StaticFiles(directory=DIST_PATH / "assets"), name="assets")

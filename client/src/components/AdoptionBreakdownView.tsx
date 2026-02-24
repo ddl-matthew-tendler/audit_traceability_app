@@ -6,6 +6,8 @@ import type { TimeRange } from './TimeRangePicker';
 import { extractRunRecords } from '../utils/runRecords';
 import { getTimeBucketsForRange } from '../utils/chartTimeBuckets';
 import { exportToCsv } from '../utils/csvExport';
+import { UnknownCountBadge } from './UnknownBadge';
+import { UsageClassInfo } from './UsageClassInfo';
 
 interface AdoptionBreakdownViewProps {
   events: AuditEvent[];
@@ -120,7 +122,9 @@ export function AdoptionBreakdownView({ events, timeRange }: AdoptionBreakdownVi
   return (
     <div className="h-full overflow-auto p-6" role="region" aria-label="Adoption breakdown">
       <div className="mx-auto max-w-6xl">
-        <h2 className="mb-2 text-lg font-medium text-[#3F4547]">SAS vs SLC adoption</h2>
+        <h2 className="mb-2 flex items-center gap-2 text-lg font-medium text-[#3F4547]">
+          SAS vs SLC adoption <UsageClassInfo />
+        </h2>
         <p className="mb-6 text-sm text-[#7F8385]">
           Unique users and active projects over time split by inferred usage class (command-first, environment-second).
         </p>
@@ -128,7 +132,16 @@ export function AdoptionBreakdownView({ events, timeRange }: AdoptionBreakdownVi
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {USAGE_CLASSES.map((usage) => (
             <div key={usage} className="rounded-lg border border-[#DBE4E8] bg-white p-4 shadow-sm">
-              <p className="text-sm text-[#7F8385]">{usage}</p>
+              <p className="flex items-center gap-1.5 text-sm text-[#7F8385]">
+                {usage}
+                {usage === 'Unknown' && (
+                  <UnknownCountBadge
+                    field="usageClass"
+                    unknownCount={records.filter((r) => r.usageClass === 'Unknown').length}
+                    totalCount={records.length}
+                  />
+                )}
+              </p>
               <p className="mt-1 text-xl font-semibold text-[#3F4547]">
                 {uniqueTotals.users.get(usage)?.size.toLocaleString() ?? '0'} users
               </p>
@@ -205,7 +218,9 @@ export function AdoptionBreakdownView({ events, timeRange }: AdoptionBreakdownVi
             <thead className="bg-[#FAFAFA] text-left text-[#7F8385]">
               <tr className="border-b border-[#DBE4E8]">
                 <th className="px-3 py-2 font-medium">{drillMode === 'users' ? 'User' : 'Project'}</th>
-                <th className="px-3 py-2 font-medium">Usage class</th>
+                <th className="px-3 py-2 font-medium">
+                  <span className="inline-flex items-center gap-1">Usage class <UsageClassInfo compact /></span>
+                </th>
                 <th className="px-3 py-2 font-medium">Run count</th>
               </tr>
             </thead>
