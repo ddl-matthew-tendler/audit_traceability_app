@@ -1077,28 +1077,63 @@ async def schedule_report_config(request: Request):
         _log(f"schedule-report config: failed to fetch user: {e}")
 
     hardware_tiers = []
+
+    def _extract_tier(raw: dict) -> dict | None:
+        """Extract id/name from HardwareTierDto or HardwareTierWithCapacityDto."""
+        if not isinstance(raw, dict):
+            return None
+        inner = raw.get("hardwareTier") if isinstance(raw.get("hardwareTier"), dict) else raw
+        tid = inner.get("id", "")
+        tname = inner.get("name", "")
+        if not tid:
+            return None
+        cores = None
+        memory = None
+        res = inner.get("hwtResources") or {}
+        if isinstance(res, dict):
+            cores = res.get("cores")
+            memory_mb = res.get("memoryInGiB") or res.get("memoryMiB") or res.get("memory")
+            if memory_mb is not None:
+                memory = f"{memory_mb} GiB" if isinstance(memory_mb, (int, float)) else str(memory_mb)
+        return {"id": tid, "name": tname, "cores": cores, "memory": memory}
+
     try:
-        r = requests.get(f"{base.rstrip('/')}/v4/hardwareTier", headers=headers, timeout=10)
-        if r.ok:
-            data = r.json()
-            if isinstance(data, list):
-                hardware_tiers = [
-                    {"id": t.get("hardwareTier", {}).get("id", t.get("id", "")),
-                     "name": t.get("hardwareTier", {}).get("name", t.get("name", "")),
-                     "cores": t.get("hardwareTier", {}).get("cores"),
-                     "memory": t.get("hardwareTier", {}).get("memory")}
-                    for t in data if isinstance(t, dict)
-                ]
+        # Try project-specific tiers first (returns array of HardwareTierWithCapacityDto).
+        proj_id = os.environ.get("DOMINO_PROJECT_ID", "")
+        if proj_id:
+            r = requests.get(f"{base.rstrip('/')}/v4/projects/{proj_id}/hardwareTiers", headers=headers, timeout=10)
+            if r.ok:
+                data = r.json()
+                if isinstance(data, list):
+                    for item in data:
+                        tier = _extract_tier(item)
+                        if tier:
+                            hardware_tiers.append(tier)
+                    _log(f"schedule-report config: got {len(hardware_tiers)} tiers from project endpoint")
+
+        # Fallback: global /v4/hardwareTier (returns HardwareTierEnvelope with .hardwareTiers[]).
+        if not hardware_tiers:
+            r = requests.get(f"{base.rstrip('/')}/v4/hardwareTier", headers=headers, timeout=10)
+            if r.ok:
+                data = r.json()
+                tier_list = data.get("hardwareTiers", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
+                for item in tier_list:
+                    tier = _extract_tier(item)
+                    if tier:
+                        hardware_tiers.append(tier)
+                _log(f"schedule-report config: got {len(hardware_tiers)} tiers from global endpoint")
+
+        # Last resort: legacy /hardwareTier endpoint.
         if not hardware_tiers:
             r2 = requests.get(f"{base.rstrip('/')}/hardwareTier", headers=headers, timeout=10)
             if r2.ok:
                 data2 = r2.json()
-                if isinstance(data2, list):
-                    hardware_tiers = [
-                        {"id": t.get("id", ""), "name": t.get("name", ""),
-                         "cores": t.get("cores"), "memory": t.get("memory")}
-                        for t in data2 if isinstance(t, dict)
-                    ]
+                tier_list2 = data2.get("hardwareTiers", []) if isinstance(data2, dict) else (data2 if isinstance(data2, list) else [])
+                for item in tier_list2:
+                    tier = _extract_tier(item)
+                    if tier:
+                        hardware_tiers.append(tier)
+                _log(f"schedule-report config: got {len(hardware_tiers)} tiers from legacy endpoint")
     except Exception as e:
         _log(f"schedule-report config: failed to fetch hardware tiers: {e}")
 

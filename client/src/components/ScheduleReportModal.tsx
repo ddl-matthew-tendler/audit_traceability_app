@@ -88,13 +88,16 @@ export function ScheduleReportModal({ open, onClose }: ScheduleReportModalProps)
           if (data.user?.email) {
             setEmails([data.user.email]);
           }
-          if (data.hardwareTiers?.length > 0) {
-            const smallest = data.hardwareTiers.reduce(
+          const tiers = (data.hardwareTiers ?? []).filter((t: { id: string }) => t.id);
+          if (tiers.length > 0) {
+            const smallest = tiers.reduce(
               (best: { id: string; cores?: number }, t: { id: string; cores?: number }) =>
                 (t.cores ?? 99) < (best.cores ?? 99) ? t : best,
-              data.hardwareTiers[0]
+              tiers[0]
             );
             setHardwareTierId(smallest.id);
+          } else {
+            setHardwareTierId('small-k8s');
           }
         }
       })
@@ -127,9 +130,9 @@ export function ScheduleReportModal({ open, onClose }: ScheduleReportModalProps)
   const canAdvance = useMemo(() => {
     if (step === 0) return selectedSections.size > 0 && title.trim().length > 0;
     if (step === 1) return emails.length > 0;
-    if (step === 2) return true;
+    if (step === 2) return hardwareTierId.trim().length > 0;
     return true;
-  }, [step, selectedSections, title, emails]);
+  }, [step, selectedSections, title, emails, hardwareTierId]);
 
   const scheduleDescription = useMemo(() => {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -598,14 +601,14 @@ function StepSchedule({
         </div>
       </div>
 
-      {hardwareTiers.length > 0 && (
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-[#2E2E38]">
-            Compute size
-          </label>
-          <p className="mb-2 text-xs text-[#7F8385]">
-            Choose how much computing power to use. The smallest size is usually enough for reports.
-          </p>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-[#2E2E38]">
+          Compute size
+        </label>
+        <p className="mb-2 text-xs text-[#7F8385]">
+          Choose how much computing power to use. The smallest size is usually enough for reports.
+        </p>
+        {hardwareTiers.length > 0 ? (
           <select
             value={hardwareTierId}
             onChange={(e) => setHardwareTierId(e.target.value)}
@@ -617,8 +620,20 @@ function StepSchedule({
               </option>
             ))}
           </select>
-        </div>
-      )}
+        ) : (
+          <div>
+            <input
+              value={hardwareTierId}
+              onChange={(e) => setHardwareTierId(e.target.value)}
+              placeholder="e.g. small-k8s"
+              className="w-full rounded-lg border border-[#DBE4E8] px-3 py-2.5 text-sm text-[#2E2E38] placeholder-[#B0B0C0] focus:border-[#543FDE] focus:outline-none focus:ring-1 focus:ring-[#543FDE]"
+            />
+            <p className="mt-1.5 text-[11px] text-[#9B9BAF]">
+              Could not load available sizes from Domino. Enter the hardware tier name your admin provided (e.g. "small-k8s", "medium-k8s"). Ask your Domino admin if unsure.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="rounded-lg border border-[#E0E0E0] bg-[#F7F6FE] p-3">
         <p className="text-xs font-medium text-[#543FDE]">Schedule preview</p>
