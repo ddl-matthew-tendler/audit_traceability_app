@@ -91,8 +91,13 @@ async def get_auth_headers(request: Request) -> dict:
 
 
 def get_domino_host() -> str | None:
-    """Return API host, normalizing apps. subdomain to root (APIs live on root domain)."""
+    """Return API host, normalizing apps. subdomain to root (APIs live on root domain).
+    Falls back to AUDIT_API_HOST when DOMINO_API_HOST is not set."""
     host = DOMINO_API_HOST
+    if not host:
+        host = AUDIT_API_HOST
+        if host:
+            _log(f"get_domino_host: DOMINO_API_HOST not set, falling back to AUDIT_API_HOST ({host})")
     if not host:
         return None
     host = host.rstrip("/")

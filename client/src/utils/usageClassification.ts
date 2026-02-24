@@ -27,16 +27,21 @@ export const USAGE_CLASS_PATTERNS: Record<Exclude<UsageClass, 'Unknown'>, RegExp
 
 export function inferUsageClass(
   commandOrRunContext: string | null | undefined,
-  environmentName: string | null | undefined
+  environmentName: string | null | undefined,
+  targetName?: string | null | undefined
 ): UsageClass {
   const primary = commandOrRunContext?.trim() ?? '';
   const secondary = environmentName?.trim() ?? '';
+  const tertiary = targetName?.trim() ?? '';
 
   const fromPrimary = classify(primary);
   if (fromPrimary !== 'Unknown') return fromPrimary;
 
   const fromSecondary = classify(secondary);
   if (fromSecondary !== 'Unknown') return fromSecondary;
+
+  const fromTarget = classify(tertiary);
+  if (fromTarget !== 'Unknown') return fromTarget;
 
   return 'Unknown';
 }

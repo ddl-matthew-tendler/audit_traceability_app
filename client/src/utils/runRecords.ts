@@ -21,8 +21,8 @@ export interface RunRecord {
   sourceEvent: AuditEvent;
 }
 
-const EXECUTION_EVENT_PATTERN = /(run|job|workspace|app|execution)/i;
-const EXECUTION_TARGET_TYPES = new Set(['run', 'job', 'workspace', 'app']);
+const EXECUTION_EVENT_PATTERN = /\b(run|job|workspace)\b/i;
+const EXECUTION_TARGET_TYPES = new Set(['run', 'job', 'workspace']);
 
 export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
   const out: RunRecord[] = [];
@@ -163,7 +163,8 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
     );
     const user = firstString(ev.actorName, deepString(metaStartedBy, 'username'), ev.actorId) ?? 'Unknown';
     const project = firstString(ev.withinProjectName, ev.withinProjectId) ?? 'Unknown';
-    const usageClass = inferUsageClass(command ?? runFile, environmentName);
+    const targetName = firstString(ev.targetName);
+    const usageClass = inferUsageClass(command ?? runFile, environmentName, targetName);
     const ts = typeof ev.timestamp === 'number' ? ev.timestamp : 0;
 
     out.push({
@@ -179,14 +180,76 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
       runFile: runFile ?? 'Unknown',
       runOrigin: runOrigin ?? 'Unknown',
       environmentName: environmentName ?? 'Unknown',
-      computeTier: computeTier ?? 'Unknown',
+      computeTier: computeTier ?? hardwareTier ?? 'Unknown',
       hardwareTier: hardwareTier ?? 'Unknown',
       durationSec,
       usageClass,
       sourceEvent: ev,
     });
   }
+  return deduplicateByRunId(out);
+}
+
+function deduplicateByRunId(records: RunRecord[]): RunRecord[] {
+  const groups = new Map<string, RunRecord[]>();
+  const noId: RunRecord[] = [];
+
+  for (const rec of records) {
+    if (rec.runId === 'Unknown') {
+      noId.push(rec);
+    } else {
+      const group = groups.get(rec.runId);
+      if (group) group.push(rec);
+      else groups.set(rec.runId, [rec]);
+    }
+  }
+
+  const out: RunRecord[] = [];
+  for (const [, group] of groups) {
+    out.push(group.length === 1 ? group[0] : mergeRunRecords(group));
+  }
+  out.push(...noId);
+  out.sort((a, b) => b.timestamp - a.timestamp);
   return out;
+}
+
+function mergeRunRecords(records: RunRecord[]): RunRecord {
+  const sorted = [...records].sort((a, b) => a.timestamp - b.timestamp);
+  const base = { ...sorted[0] };
+
+  for (const rec of sorted) {
+    if (base.command === 'Unknown' && rec.command !== 'Unknown') base.command = rec.command;
+    if (base.status === 'Unknown' && rec.status !== 'Unknown') base.status = rec.status;
+    if (base.runType === 'Unknown' && rec.runType !== 'Unknown') base.runType = rec.runType;
+    if (base.runFile === 'Unknown' && rec.runFile !== 'Unknown') base.runFile = rec.runFile;
+    if (base.runOrigin === 'Unknown' && rec.runOrigin !== 'Unknown') base.runOrigin = rec.runOrigin;
+    if (base.environmentName === 'Unknown' && rec.environmentName !== 'Unknown') base.environmentName = rec.environmentName;
+    if (base.computeTier === 'Unknown' && rec.computeTier !== 'Unknown') base.computeTier = rec.computeTier;
+    if (base.hardwareTier === 'Unknown' && rec.hardwareTier !== 'Unknown') base.hardwareTier = rec.hardwareTier;
+    if (base.durationSec == null && rec.durationSec != null) base.durationSec = rec.durationSec;
+    if (base.user === 'Unknown' && rec.user !== 'Unknown') base.user = rec.user;
+    if (base.project === 'Unknown' && rec.project !== 'Unknown') base.project = rec.project;
+    if (base.usageClass === 'Unknown' && rec.usageClass !== 'Unknown') base.usageClass = rec.usageClass;
+  }
+
+  // Derive duration from start/stop timestamps if still missing
+  if (base.durationSec == null && sorted.length >= 2) {
+    const first = sorted[0].timestamp;
+    const last = sorted[sorted.length - 1].timestamp;
+    if (first > 0 && last > 0 && last > first) {
+      base.durationSec = (last - first) / 1000;
+    }
+  }
+
+  // Pick the latest non-Unknown status (Stop/Complete overrides Started)
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    if (sorted[i].status !== 'Unknown' && sorted[i].status !== 'Started') {
+      base.status = sorted[i].status;
+      break;
+    }
+  }
+
+  return base;
 }
 
 function isExecutionEvent(event: AuditEvent): boolean {
