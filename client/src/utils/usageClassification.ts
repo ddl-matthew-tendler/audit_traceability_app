@@ -1,6 +1,7 @@
 export type UsageClass = 'SAS' | 'SLC' | 'Unknown';
 
 // Keep these patterns centralized so stakeholders can tune them quickly.
+// SAS = SAS Institute product. SLC = SAS-language alternative (e.g. Altair SLC) used to limit SAS licenses.
 export const USAGE_CLASS_PATTERNS: Record<Exclude<UsageClass, 'Unknown'>, RegExp[]> = {
   SAS: [
     /\bsas\b/i,
@@ -10,14 +11,17 @@ export const USAGE_CLASS_PATTERNS: Record<Exclude<UsageClass, 'Unknown'>, RegExp
     /\bdata\s+\w+\s*;/i,
     /\blibname\b/i,
   ],
+  // SLC = Altair SLC / SAS Language Compiler / other SAS-language alternatives (not Python, R, Jupyter, etc.)
   SLC: [
-    /\bpython\b/i,
-    /\br\s*script\b/i,
-    /\brstudio\b/i,
-    /\bjupyter\b/i,
-    /\bvscode\b/i,
-    /\bnotebook\b/i,
-    /\bapp\s*server\b/i,
+    /\bslc\b/i,
+    /\baltair\b/i,
+    /\bwps\b/i,
+    /\bworld\s*programming\b/i,
+    /\bsas\s*language\s*compiler\b/i,
+    /\bsas\s*alternative\b/i,
+    /\bhubcli\b/i,
+    /\bslc\s*hub\b/i,
+    /\baltair\s*slc\b/i,
   ],
 };
 

@@ -104,7 +104,7 @@ function AppContent() {
             timeRange={timeRange}
           />
         ) : viewMode === 'jobRuns' ? (
-          <JobRunsView events={events} />
+          <JobRunsView events={events} timeRange={timeRange} />
         ) : viewMode === 'adoptionBreakdown' ? (
           <AdoptionBreakdownView events={events} timeRange={timeRange} />
         ) : viewMode === 'computeInsights' ? (
