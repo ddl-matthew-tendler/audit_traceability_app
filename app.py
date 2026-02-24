@@ -1194,15 +1194,18 @@ async def schedule_report(request: Request):
     if not user_id:
         return JSONResponse({"error": "User ID could not be determined."}, status_code=400)
 
-    # Build cron string
+    # Build Quartz-style 6-field cron: seconds minutes hours dayOfMonth month dayOfWeek
+    # Quartz dayOfWeek: 1=SUN 2=MON 3=TUE 4=WED 5=THU 6=FRI 7=SAT
+    # When dayOfMonth is set, dayOfWeek must be '?' and vice versa.
+    quartz_dow = ((day_of_week % 7) + 1)  # convert JS 0=Sun to Quartz 1=Sun
     if frequency == "daily":
-        cron_string = f"{minute} {hour} * * *"
+        cron_string = f"0 {minute} {hour} * * ?"
         human_readable = f"Every day at {hour:02d}:{minute:02d}"
     elif frequency == "monthly":
-        cron_string = f"{minute} {hour} 1 * *"
+        cron_string = f"0 {minute} {hour} 1 * ?"
         human_readable = f"First of every month at {hour:02d}:{minute:02d}"
     else:
-        cron_string = f"{minute} {hour} * * {day_of_week}"
+        cron_string = f"0 {minute} {hour} ? * {quartz_dow}"
         day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
         human_readable = f"Every {day_names[day_of_week % 7]} at {hour:02d}:{minute:02d}"
 
