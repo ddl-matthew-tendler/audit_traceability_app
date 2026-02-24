@@ -19,6 +19,7 @@ export interface AuditEvent {
   environmentName?: string;
   runId?: string;
   jobId?: string;
+  runType?: string;
   runFile?: string;
   runOrigin?: string;
   raw?: Record<string, unknown>;

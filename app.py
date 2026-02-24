@@ -30,14 +30,17 @@ AUDIT_API_FALLBACK_PATHS = [
 AUDIT_API_MAX_LIMIT = int(os.environ.get("AUDIT_API_MAX_LIMIT", "1000"))
 # Max total events we'll fetch via pagination (safety cap).
 AUDIT_PAGINATION_CAP = int(os.environ.get("AUDIT_PAGINATION_CAP", "50000"))
-RUNS_ENRICHMENT_ENABLED = os.environ.get("RUNS_ENRICHMENT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+RUNS_ENRICHMENT_ENABLED = os.environ.get("RUNS_ENRICHMENT_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 RUNS_ENRICHMENT_MAX_RUNS = int(os.environ.get("RUNS_ENRICHMENT_MAX_RUNS", "300"))
 RUNS_ENRICHMENT_TIMEOUT_SEC = int(os.environ.get("RUNS_ENRICHMENT_TIMEOUT_SEC", "10"))
 # Jobs enrichment (inspired by domaudit-main professional services tool).
 # Uses /v4/jobs/{jobId} + /v4/jobs/{jobId}/runtimeExecutionDetails for rich fields.
-JOBS_ENRICHMENT_ENABLED = os.environ.get("JOBS_ENRICHMENT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+JOBS_ENRICHMENT_ENABLED = os.environ.get("JOBS_ENRICHMENT_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
 JOBS_ENRICHMENT_MAX = int(os.environ.get("JOBS_ENRICHMENT_MAX", "200"))
 JOBS_ENRICHMENT_TIMEOUT_SEC = int(os.environ.get("JOBS_ENRICHMENT_TIMEOUT_SEC", "10"))
+# Control Center bulk enrichment — single API call for date range fills duration, hardwareTier, user, project, runType.
+CC_ENRICHMENT_ENABLED = os.environ.get("CC_ENRICHMENT_ENABLED", "true").strip().lower() in {"1", "true", "yes", "on"}
+CC_ENRICHMENT_TIMEOUT_SEC = int(os.environ.get("CC_ENRICHMENT_TIMEOUT_SEC", "30"))
 
 app = FastAPI()
 
@@ -248,6 +251,11 @@ def _normalize_audit_event(raw: dict) -> dict:
             metadata.get("jobId"),
             entity.get("id") if (entity.get("entityType") or "").lower() == "job" else None,
         ),
+        "runType": _first_non_empty(
+            metadata.get("runType"),
+            metadata.get("executionType"),
+            metadata.get("workloadType"),
+        ),
         "runFile": _first_non_empty(raw.get("runFile"), metadata.get("runFile"), metadata.get("filename")),
         "runOrigin": _first_non_empty(raw.get("runOrigin"), metadata.get("runOrigin"), metadata.get("source")),
         # Lightweight raw snapshot for future extraction/debugging.
@@ -457,6 +465,113 @@ def _enrich_events_with_jobs(events: list[dict], headers: dict) -> list[dict]:
     return events
 
 
+def _enrich_events_bulk_from_control_center(events: list[dict], headers: dict) -> list[dict]:
+    """
+    Bulk enrichment via /controlCenter/utilization/runs (single API call for date range).
+    Returns RunUtilization[] with: id, runDurationInSeconds, hardwareTierId, projectIdentity,
+    startingUserFullName, runType, estimatedCost. We match by id (== runId) and fill fields.
+    Also calls /hardwareTier to resolve hardwareTierId → human-readable name.
+    """
+    if not CC_ENRICHMENT_ENABLED:
+        return events
+
+    base = get_domino_host()
+    if not base:
+        return events
+
+    timestamps = [e.get("timestamp") for e in events if isinstance(e.get("timestamp"), (int, float))]
+    if not timestamps:
+        return events
+
+    from datetime import datetime, timedelta, timezone
+
+    min_ts = min(timestamps)
+    max_ts = max(timestamps)
+    # Timestamps may be in ms or seconds; normalize to seconds.
+    if min_ts > 1e12:
+        min_ts /= 1000
+        max_ts /= 1000
+
+    start_dt = datetime.fromtimestamp(min_ts, tz=timezone.utc) - timedelta(days=1)
+    end_dt = datetime.fromtimestamp(max_ts, tz=timezone.utc) + timedelta(days=1)
+    start_date = start_dt.strftime("%Y%m%d")
+    end_date = end_dt.strftime("%Y%m%d")
+
+    # Step 1: Fetch hardware tier ID→name map (single call).
+    hw_tier_names: dict[str, str] = {}
+    try:
+        hw_url = f"{base.rstrip('/')}/hardwareTier?show_archived=true"
+        hw_resp = requests.get(hw_url, headers=headers, timeout=CC_ENRICHMENT_TIMEOUT_SEC)
+        if hw_resp.ok:
+            hw_data = hw_resp.json()
+            if isinstance(hw_data, list):
+                for tier in hw_data:
+                    if isinstance(tier, dict) and tier.get("id") and tier.get("name"):
+                        hw_tier_names[tier["id"]] = tier["name"]
+            _log(f"Control Center: resolved {len(hw_tier_names)} hardware tier names.")
+    except Exception as e:
+        _log(f"Control Center: failed to fetch hardware tiers: {e}")
+
+    # Step 2: Fetch runs for date range (single call, may return thousands).
+    runs_by_id: dict[str, dict] = {}
+    try:
+        runs_url = f"{base.rstrip('/')}/controlCenter/utilization/runs"
+        params = {"startDate": start_date, "endDate": end_date}
+        runs_resp = requests.get(runs_url, headers=headers, params=params, timeout=CC_ENRICHMENT_TIMEOUT_SEC)
+        if runs_resp.ok:
+            runs_data = runs_resp.json()
+            if isinstance(runs_data, list):
+                for run in runs_data:
+                    if isinstance(run, dict) and run.get("id"):
+                        runs_by_id[run["id"]] = run
+            _log(f"Control Center: fetched {len(runs_by_id)} runs for range {start_date}–{end_date}.")
+        else:
+            _log(f"Control Center runs API returned {runs_resp.status_code}; skipping bulk enrichment.")
+            return events
+    except Exception as e:
+        _log(f"Control Center: failed to fetch runs: {e}")
+        return events
+
+    if not runs_by_id:
+        return events
+
+    def _fill(event: dict, key: str, value):
+        if event.get(key) not in (None, "", "Unknown"):
+            return
+        if value in (None, ""):
+            return
+        event[key] = value
+
+    enriched_count = 0
+    for event in events:
+        run_id = event.get("runId")
+        if not isinstance(run_id, str):
+            continue
+        run = runs_by_id.get(run_id.strip())
+        if not run:
+            continue
+
+        _fill(event, "durationSec", run.get("runDurationInSeconds"))
+
+        hw_id = run.get("hardwareTierId")
+        if isinstance(hw_id, str):
+            hw_name = hw_tier_names.get(hw_id, hw_id)
+            _fill(event, "hardwareTier", hw_name)
+            _fill(event, "computeTier", hw_name)
+
+        _fill(event, "withinProjectName", run.get("projectIdentity"))
+        _fill(event, "actorName", run.get("startingUserFullName"))
+
+        run_type = run.get("runType")
+        if isinstance(run_type, str) and run_type.strip():
+            _fill(event, "runType", run_type.strip())
+
+        enriched_count += 1
+
+    _log(f"Control Center bulk enrichment: matched {enriched_count}/{len(events)} events.")
+    return events
+
+
 def _load_mock_events(limit: int = 100) -> list[dict]:
     """Load audit events from CSV mock file. Returns list of normalized events."""
     if not MOCK_CSV_PATH.exists():
@@ -631,6 +746,9 @@ async def audit(request: Request):
             if len(raw_events) < AUDIT_API_MAX_LIMIT:
                 break
 
+        # Bulk enrichment first (cheapest: 1–2 API calls for entire date range).
+        all_events = _enrich_events_bulk_from_control_center(all_events, headers)
+        # Per-ID enrichment fills remaining gaps (command, environment, etc.).
         all_events = _enrich_events_with_runs(all_events, headers)
         all_events = _enrich_events_with_jobs(all_events, headers)
         _log(f"GET /api/audit returning {len(all_events)} events")

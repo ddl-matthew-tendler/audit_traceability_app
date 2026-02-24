@@ -19,6 +19,7 @@ export function DataCoverageView({ events }: DataCoverageViewProps) {
       { field: 'Compute tier', present: records.filter((r) => r.computeTier !== 'Unknown').length },
       { field: 'Hardware tier', present: records.filter((r) => r.hardwareTier !== 'Unknown').length },
       { field: 'Environment', present: records.filter((r) => r.environmentName !== 'Unknown').length },
+      { field: 'Run type', present: records.filter((r) => r.runType !== 'Unknown').length },
       { field: 'Usage class', present: records.filter((r) => r.usageClass !== 'Unknown').length },
     ];
 

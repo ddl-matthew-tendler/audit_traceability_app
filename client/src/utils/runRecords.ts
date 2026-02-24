@@ -10,6 +10,7 @@ export interface RunRecord {
   status: string;
   command: string;
   runId: string;
+  runType: string;
   runFile: string;
   runOrigin: string;
   environmentName: string;
@@ -113,6 +114,12 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
         durationSec = (completedMs - startMs) / 1000;
       }
     }
+    const runType = firstString(
+      eventRecord['runType'],
+      metadata['runType'],
+      metadata['executionType'],
+      metadata['workloadType']
+    );
     const user = firstString(ev.actorName, deepString(metaStartedBy, 'username'), ev.actorId) ?? 'Unknown';
     const project = firstString(ev.withinProjectName, ev.withinProjectId) ?? 'Unknown';
     const usageClass = inferUsageClass(command ?? runFile, environmentName);
@@ -127,6 +134,7 @@ export function extractRunRecords(events: AuditEvent[]): RunRecord[] {
       status: status ?? 'Unknown',
       command: command ?? 'Unknown',
       runId: runId ?? 'Unknown',
+      runType: runType ?? 'Unknown',
       runFile: runFile ?? 'Unknown',
       runOrigin: runOrigin ?? 'Unknown',
       environmentName: environmentName ?? 'Unknown',

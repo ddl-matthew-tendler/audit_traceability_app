@@ -29,8 +29,9 @@ export function RunRecordsTable({
             <th className="px-3 py-2 font-medium">User</th>
             <th className="px-3 py-2 font-medium">Project</th>
             <th className="px-3 py-2 font-medium">Command</th>
-            <th className="px-3 py-2 font-medium">Compute tier</th>
+            <th className="px-3 py-2 font-medium">Hardware tier</th>
             <th className="px-3 py-2 font-medium">Environment</th>
+            <th className="px-3 py-2 font-medium">Run type</th>
             <th className="px-3 py-2 font-medium">Usage</th>
           </tr>
         </thead>
@@ -49,10 +50,11 @@ export function RunRecordsTable({
               <td className="max-w-[260px] truncate px-3 py-2" title={row.command}>
                 {row.command}
               </td>
-              <td className="px-3 py-2">{row.computeTier}</td>
+              <td className="px-3 py-2">{row.hardwareTier}</td>
               <td className="max-w-[220px] truncate px-3 py-2" title={row.environmentName}>
                 {row.environmentName}
               </td>
+              <td className="px-3 py-2">{row.runType}</td>
               <td className="px-3 py-2">{row.usageClass}</td>
             </tr>
           ))}
