@@ -59,6 +59,9 @@ yarn-error.log
 # OS
 Thumbs.db
 
+# Audit exports (may contain secrets; do not commit)
+audit_full_metadata_friendly_*.csv
+
 # Environment variables
 .env
 .env.local
