@@ -7,6 +7,10 @@ import { StackedEventsByProjectView } from './components/StackedEventsByProjectV
 import { UniqueUsersByProjectView } from './components/UniqueUsersByProjectView';
 import { ActivityByProjectView } from './components/ActivityByProjectView';
 import { EventTypesView } from './components/EventTypesView';
+import { JobRunsView } from './components/JobRunsView';
+import { AdoptionBreakdownView } from './components/AdoptionBreakdownView';
+import { ComputeInsightsView } from './components/ComputeInsightsView';
+import { DataCoverageView } from './components/DataCoverageView';
 import { useAppStore } from './store/useAppStore';
 import { useAuditEvents } from './api/hooks';
 import {
@@ -99,6 +103,14 @@ function AppContent() {
             previousPeriodLabel={getPreviousPeriodLabel(timeRange)}
             timeRange={timeRange}
           />
+        ) : viewMode === 'jobRuns' ? (
+          <JobRunsView events={events} />
+        ) : viewMode === 'adoptionBreakdown' ? (
+          <AdoptionBreakdownView events={events} timeRange={timeRange} />
+        ) : viewMode === 'computeInsights' ? (
+          <ComputeInsightsView events={events} />
+        ) : viewMode === 'dataCoverage' ? (
+          <DataCoverageView events={events} />
         ) : viewMode === 'usageOverTime' ? (
           <UsageOverTimeView events={events} timeRange={timeRange} />
         ) : viewMode === 'stackedEventsByProject' ? (

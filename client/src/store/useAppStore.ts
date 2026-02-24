@@ -2,6 +2,10 @@ import { create } from 'zustand';
 
 export type ViewMode =
   | 'overview'
+  | 'jobRuns'
+  | 'adoptionBreakdown'
+  | 'computeInsights'
+  | 'dataCoverage'
   | 'usageOverTime'
   | 'stackedEventsByProject'
   | 'uniqueUsersByProject'

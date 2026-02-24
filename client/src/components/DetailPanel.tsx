@@ -24,6 +24,10 @@ export function DetailPanel({ event, onClose }: DetailPanelProps) {
   if (!event) return null;
 
   const link = buildEventDeepLink(event);
+  const hasMetadata = !!event.metadata && Object.keys(event.metadata).length > 0;
+  const metadataJson = hasMetadata
+    ? JSON.stringify(maskSensitiveObject(event.metadata), null, 2)
+    : '';
 
   return (
     <>
@@ -88,14 +92,22 @@ export function DetailPanel({ event, onClose }: DetailPanelProps) {
               {event.withinProjectName ?? event.withinProjectId ?? '—'}
             </p>
           </section>
-          {event.metadata && Object.keys(event.metadata).length > 0 && (
+          <section>
+            <h3 className="text-xs font-medium uppercase tracking-wide text-domino-text-body">Execution fields</h3>
+            <p className="mt-1 text-sm text-domino-text">Command: {event.command ?? 'Unknown'}</p>
+            <p className="text-sm text-domino-text">Status: {event.status ?? 'Unknown'}</p>
+            <p className="text-sm text-domino-text">Run ID: {event.runId ?? 'Unknown'}</p>
+            <p className="text-sm text-domino-text">Environment: {event.environmentName ?? 'Unknown'}</p>
+            <p className="text-sm text-domino-text">Compute tier: {event.computeTier ?? 'Unknown'}</p>
+          </section>
+          {hasMetadata && (
             <section>
               <details className="group">
                 <summary className="cursor-pointer text-xs font-medium uppercase tracking-wide text-domino-text-body">
-                  Metadata (JSON)
+                  Metadata (JSON, sensitive values masked)
                 </summary>
                 <pre className="mt-2 overflow-auto rounded border border-domino-border bg-domino-bg p-2 text-xs text-domino-text">
-                  {JSON.stringify(event.metadata, null, 2)}
+                  {metadataJson}
                 </pre>
               </details>
             </section>
@@ -114,4 +126,28 @@ export function DetailPanel({ event, onClose }: DetailPanelProps) {
       </aside>
     </>
   );
+}
+
+function maskSensitiveObject(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(maskSensitiveObject);
+  if (!value || typeof value !== 'object') return value;
+  const out: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    if (isSensitiveKey(key)) {
+      out[key] = '[MASKED]';
+    } else if (typeof val === 'string' && isSensitiveValue(val)) {
+      out[key] = '[MASKED]';
+    } else {
+      out[key] = maskSensitiveObject(val);
+    }
+  }
+  return out;
+}
+
+function isSensitiveKey(key: string): boolean {
+  return /(token|secret|password|api[_-]?key|authorization)/i.test(key);
+}
+
+function isSensitiveValue(value: string): boolean {
+  return /^sk-[a-z0-9]/i.test(value.trim());
 }

@@ -11,6 +11,16 @@ export interface AuditEvent {
   withinProjectId?: string;
   withinProjectName?: string;
   metadata?: Record<string, unknown>;
+  command?: string;
+  status?: string;
+  durationSec?: number;
+  computeTier?: string;
+  hardwareTier?: string;
+  environmentName?: string;
+  runId?: string;
+  runFile?: string;
+  runOrigin?: string;
+  raw?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -37,6 +47,10 @@ export const NODE_COLORS: Record<EventCategory, string> = {
 
 export type ViewMode =
   | 'overview'
+  | 'jobRuns'
+  | 'adoptionBreakdown'
+  | 'computeInsights'
+  | 'dataCoverage'
   | 'usageOverTime'
   | 'stackedEventsByProject'
   | 'uniqueUsersByProject'

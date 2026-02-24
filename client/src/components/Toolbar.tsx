@@ -3,6 +3,10 @@ import { TimeRangePicker, type TimeRange } from './TimeRangePicker';
 
 const VIEW_LABELS: { id: ViewMode; label: string }[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'jobRuns', label: 'Job runs' },
+  { id: 'adoptionBreakdown', label: 'SAS vs SLC adoption' },
+  { id: 'computeInsights', label: 'Compute insights' },
+  { id: 'dataCoverage', label: 'Data coverage' },
   { id: 'usageOverTime', label: 'Usage over time' },
   { id: 'stackedEventsByProject', label: 'Stacked by project' },
   { id: 'uniqueUsersByProject', label: 'Users per project' },

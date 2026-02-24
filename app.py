@@ -30,6 +30,9 @@ AUDIT_API_FALLBACK_PATHS = [
 AUDIT_API_MAX_LIMIT = int(os.environ.get("AUDIT_API_MAX_LIMIT", "1000"))
 # Max total events we'll fetch via pagination (safety cap).
 AUDIT_PAGINATION_CAP = int(os.environ.get("AUDIT_PAGINATION_CAP", "50000"))
+RUNS_ENRICHMENT_ENABLED = os.environ.get("RUNS_ENRICHMENT_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
+RUNS_ENRICHMENT_MAX_RUNS = int(os.environ.get("RUNS_ENRICHMENT_MAX_RUNS", "300"))
+RUNS_ENRICHMENT_TIMEOUT_SEC = int(os.environ.get("RUNS_ENRICHMENT_TIMEOUT_SEC", "10"))
 
 app = FastAPI()
 
@@ -107,6 +110,26 @@ def _normalize_audit_event(raw: dict) -> dict:
     targets = raw.get("targets") or []
     first_target = targets[0] if targets else {}
     entity = first_target.get("entity") or {}
+    metadata = raw.get("metadata") or {}
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    def _first_non_empty(*values):
+        for value in values:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return None
+
+    def _first_number(*values):
+        for value in values:
+            if isinstance(value, (int, float)):
+                return float(value)
+            if isinstance(value, str):
+                try:
+                    return float(value.strip())
+                except ValueError:
+                    continue
+        return None
 
     return {
         "id": raw.get("id"),
@@ -119,8 +142,139 @@ def _normalize_audit_event(raw: dict) -> dict:
         "targetName": entity.get("name") or raw.get("targetName"),
         "withinProjectId": context_in.get("id") or raw.get("withinProjectId"),
         "withinProjectName": context_in.get("name") or raw.get("withinProjectName"),
-        "metadata": raw.get("metadata") or {},
+        "metadata": metadata,
+        # Best-effort execution fields used by metrics views (remain optional).
+        "command": _first_non_empty(
+            raw.get("command"),
+            metadata.get("runCommand"),
+            metadata.get("command"),
+            metadata.get("jobRunCommand"),
+            metadata.get("commandToRun"),
+        ),
+        "status": _first_non_empty(raw.get("status"), metadata.get("status"), metadata.get("runStatus")),
+        "durationSec": _first_number(
+            raw.get("durationSec"),
+            metadata.get("runDurationSec"),
+            metadata.get("runDurationSeconds"),
+            metadata.get("runDurationInSeconds"),
+        ),
+        "computeTier": _first_non_empty(
+            raw.get("computeTier"),
+            metadata.get("computeTier"),
+            metadata.get("computeSize"),
+            metadata.get("tier"),
+        ),
+        "hardwareTier": _first_non_empty(
+            raw.get("hardwareTier"),
+            metadata.get("hardwareTier"),
+            metadata.get("hardwareTierName"),
+        ),
+        "environmentName": _first_non_empty(
+            raw.get("environmentName"),
+            metadata.get("environmentName"),
+            metadata.get("environment"),
+            metadata.get("environmentRevisionName"),
+        ),
+        "runId": _first_non_empty(
+            raw.get("runId"),
+            metadata.get("runId"),
+            metadata.get("executionId"),
+            entity.get("id") if (entity.get("entityType") or "").lower() == "run" else None,
+        ),
+        "runFile": _first_non_empty(raw.get("runFile"), metadata.get("runFile"), metadata.get("filename")),
+        "runOrigin": _first_non_empty(raw.get("runOrigin"), metadata.get("runOrigin"), metadata.get("source")),
+        # Lightweight raw snapshot for future extraction/debugging.
+        "raw": {
+            "id": raw.get("id"),
+            "action": raw.get("action"),
+            "in": raw.get("in"),
+            "targets": raw.get("targets"),
+            "source": raw.get("source"),
+        },
     }
+
+
+def _enrich_events_with_runs(events: list[dict], headers: dict) -> list[dict]:
+    """
+    Optional run enrichment using Domino /v4/runs/{runId}.
+    Keeps audit values when present and fills missing fields only.
+    """
+    if not RUNS_ENRICHMENT_ENABLED:
+        return events
+
+    base = get_domino_host()
+    if not base:
+        _log("RUNS_ENRICHMENT_ENABLED=true but DOMINO_API_HOST is not set; skipping enrichment.")
+        return events
+
+    run_ids: list[str] = []
+    seen: set[str] = set()
+    for event in events:
+        run_id = event.get("runId")
+        if not isinstance(run_id, str) or not run_id.strip():
+            continue
+        run_id = run_id.strip()
+        if run_id.lower() == "unknown":
+            continue
+        if run_id in seen:
+            continue
+        seen.add(run_id)
+        run_ids.append(run_id)
+        if len(run_ids) >= RUNS_ENRICHMENT_MAX_RUNS:
+            break
+
+    if not run_ids:
+        return events
+
+    runs_by_id: dict[str, dict] = {}
+    for run_id in run_ids:
+        try:
+            url = f"{base.rstrip('/')}/v4/runs/{run_id}"
+            resp = requests.get(url, headers=headers, timeout=RUNS_ENRICHMENT_TIMEOUT_SEC)
+            if not resp.ok:
+                continue
+            payload = resp.json()
+            if isinstance(payload, dict):
+                runs_by_id[run_id] = payload
+        except Exception:
+            continue
+
+    if not runs_by_id:
+        _log("Run enrichment attempted but no run details were resolved.")
+        return events
+
+    def _fill(event: dict, key: str, value):
+        if event.get(key) not in (None, "", "Unknown"):
+            return
+        if value in (None, ""):
+            return
+        event[key] = value
+
+    enriched_count = 0
+    for event in events:
+        run_id = event.get("runId")
+        if not isinstance(run_id, str):
+            continue
+        run_data = runs_by_id.get(run_id)
+        if not run_data:
+            continue
+        _fill(event, "command", run_data.get("command"))
+        _fill(event, "status", run_data.get("status"))
+        _fill(event, "durationSec", run_data.get("runDurationInSeconds"))
+        _fill(event, "hardwareTier", run_data.get("hardwareTierName"))
+
+        # Try common environment names from run payloads.
+        env_name = None
+        if isinstance(run_data.get("environmentDetails"), dict):
+            env_name = (
+                run_data["environmentDetails"].get("name")
+                or run_data["environmentDetails"].get("environmentName")
+            )
+        _fill(event, "environmentName", env_name)
+        enriched_count += 1
+
+    _log(f"Run enrichment resolved {len(runs_by_id)} run records; applied to {enriched_count} events.")
+    return events
 
 
 def _load_mock_events(limit: int = 100) -> list[dict]:
@@ -297,6 +451,7 @@ async def audit(request: Request):
             if len(raw_events) < AUDIT_API_MAX_LIMIT:
                 break
 
+        all_events = _enrich_events_with_runs(all_events, headers)
         _log(f"GET /api/audit returning {len(all_events)} events")
         return JSONResponse(all_events)
     except Exception as e:
