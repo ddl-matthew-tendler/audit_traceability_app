@@ -6,9 +6,6 @@ import type { AuditEvent } from '../types';
 import { HoverTooltip } from './HoverTooltip';
 import { getEventActivityBucketsForRange, bucketEventsByTime } from '../utils/chartTimeBuckets';
 import type { TimeRange } from './TimeRangePicker';
-import { ExecutiveBriefing } from './ExecutiveBriefing';
-import { buildExecutiveInsights } from '../utils/executiveInsights';
-
 function computeMetrics(events: AuditEvent[]) {
   const users = new Set<string>();
   const projects = new Set<string>();
@@ -60,10 +57,6 @@ export function OverviewDashboard({
 }: OverviewDashboardProps) {
   const metrics = useMemo(() => computeMetrics(events), [events]);
   const previousMetrics = useMemo(() => computeMetrics(previousEvents), [previousEvents]);
-  const executiveInsights = useMemo(
-    () => buildExecutiveInsights(events, previousEvents),
-    [events, previousEvents]
-  );
 
   const totalEventsChange = showComparison
     ? formatChange(metrics.totalEvents, previousMetrics.totalEvents, previousPeriodLabel)
@@ -161,8 +154,6 @@ export function OverviewDashboard({
         <p className="mb-6 text-sm text-[#7F8385]">
           Key metrics from audit trail data to understand how Domino is being used.
         </p>
-
-        <ExecutiveBriefing report={executiveInsights} />
 
         {/* Metric cards */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

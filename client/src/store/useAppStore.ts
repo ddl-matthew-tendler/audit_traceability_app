@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export type ViewMode =
   | 'overview'
+  | 'aiBriefing'
   | 'jobRuns'
   | 'adoptionBreakdown'
   | 'computeInsights'
