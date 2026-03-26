@@ -41,8 +41,9 @@ env/
 *~
 .idea/
 
-# IDE
-.vscode/
+# IDE (track shared Cursor/VS Code workspace settings; ignore other .vscode noise)
+.vscode/*
+!.vscode/settings.json
 .sublime-text-project
 .sublime-text-workspace
 *.swp

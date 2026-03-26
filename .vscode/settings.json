@@ -1,0 +1,13 @@
+{
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/client/dist/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/client/dist": true
+  },
+  "git.repositoryScanMaxDepth": 2
+}
