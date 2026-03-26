@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toolbar } from './components/Toolbar';
 import { OverviewDashboard } from './components/OverviewDashboard';
-import { AIBriefingView } from './components/AIBriefingView';
 import { UsageOverTimeView } from './components/UsageOverTimeView';
 import { StackedEventsByProjectView } from './components/StackedEventsByProjectView';
 import { UniqueUsersByProjectView } from './components/UniqueUsersByProjectView';
@@ -103,11 +102,6 @@ function AppContent() {
             showComparison={previousParams != null}
             previousPeriodLabel={getPreviousPeriodLabel(timeRange)}
             timeRange={timeRange}
-          />
-        ) : viewMode === 'aiBriefing' ? (
-          <AIBriefingView
-            events={events}
-            previousEvents={previousParams ? previousEvents : []}
           />
         ) : viewMode === 'jobRuns' ? (
           <JobRunsView events={events} timeRange={timeRange} />

@@ -5,7 +5,6 @@ import { ScheduleReportModal } from './ScheduleReportModal';
 
 const VIEW_LABELS: { id: ViewMode; label: string }[] = [
   { id: 'overview', label: 'Overview' },
-  { id: 'aiBriefing', label: 'AI' },
   { id: 'jobRuns', label: 'Job runs' },
   { id: 'adoptionBreakdown', label: 'SAS vs SLC adoption' },
   { id: 'computeInsights', label: 'Compute insights' },
