@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 
 TOKEN_URL = "http://localhost:8899/access-token"
 DOMINO_API_HOST = os.environ.get("DOMINO_API_HOST", "").strip() or None
-# Audit Trail API host — hardcoded for life-sciences-demo; remove to use DOMINO_API_HOST again.
-AUDIT_API_HOST = os.environ.get("AUDIT_API_HOST", "https://life-sciences-demo.domino-eval.com").strip().rstrip("/")
+# Audit Trail API host defaults to the current Domino deployment host.
+AUDIT_API_HOST = (os.environ.get("AUDIT_API_HOST") or DOMINO_API_HOST or "").strip().rstrip("/")
 # Audit Trail API path - Admin Guide uses /api/audittrail/v1/auditevents (tested working).
 # Platform API (e.g. Domino Cloud) often uses /auditevents. Override via AUDIT_API_PATH if needed.
 AUDIT_API_PATH = os.environ.get("AUDIT_API_PATH", "/api/audittrail/v1/auditevents").strip()
@@ -796,6 +796,11 @@ def _parse_events_from_response(data: dict | list) -> list[dict]:
 async def audit(request: Request):
     """Proxy GET /api/audit -> AUDIT_API_HOST + path. Paginates when limit > API max (1000)."""
     base = AUDIT_API_HOST
+    if not base:
+        return JSONResponse(
+            {"error": "AUDIT_API_HOST is not set (and DOMINO_API_HOST was unavailable)."},
+            status_code=503,
+        )
     try:
         headers = await get_auth_headers(request)
         headers["Accept"] = "application/json"
