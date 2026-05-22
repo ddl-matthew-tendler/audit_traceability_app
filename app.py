@@ -17,8 +17,38 @@ from fastapi.staticfiles import StaticFiles
 
 TOKEN_URL = "http://localhost:8899/access-token"
 DOMINO_API_HOST = os.environ.get("DOMINO_API_HOST", "").strip() or None
-# Audit Trail API host defaults to the current Domino deployment host.
-AUDIT_API_HOST = (os.environ.get("AUDIT_API_HOST") or DOMINO_API_HOST or "").strip().rstrip("/")
+
+
+def _resolve_audit_host() -> str:
+    """Return the host to use for Audit Trail API calls.
+
+    On Domino Cloud the internal nucleus-frontend service (DOMINO_API_HOST) does not
+    route /api/audittrail/* — those requests must go to the public hostname.  We fetch
+    that from /currentInstallConfig on the internal host so no manual config is needed.
+    An explicit AUDIT_API_HOST env var always takes priority.
+    """
+    explicit = os.environ.get("AUDIT_API_HOST", "").strip().rstrip("/")
+    if explicit:
+        return explicit
+    internal = (DOMINO_API_HOST or "").rstrip("/")
+    if not internal:
+        return ""
+    try:
+        api_key = os.environ.get("DOMINO_USER_API_KEY", "").strip()
+        auth = {"X-Domino-Api-Key": api_key} if api_key else {}
+        r = requests.get(f"{internal}/currentInstallConfig", headers=auth, timeout=5)
+        if r.ok:
+            external = r.json().get("host", "").strip().rstrip("/")
+            if external:
+                return external
+    except Exception:
+        pass
+    return internal
+
+
+# Audit Trail API host — auto-resolved from /currentInstallConfig on Domino Cloud,
+# falls back to DOMINO_API_HOST. Override with AUDIT_API_HOST env var if needed.
+AUDIT_API_HOST = _resolve_audit_host()
 # Audit Trail API path - Admin Guide uses /api/audittrail/v1/auditevents (tested working).
 # Platform API (e.g. Domino Cloud) often uses /auditevents. Override via AUDIT_API_PATH if needed.
 AUDIT_API_PATH = os.environ.get("AUDIT_API_PATH", "/api/audittrail/v1/auditevents").strip()
@@ -837,8 +867,13 @@ async def audit(request: Request):
 
         if working_path is None:
             err_msg = last_err or f"Audit API returned {last_status}"
-            if last_status == 404 and "may not be available" not in err_msg:
-                err_msg = f"{err_msg} Try AUDIT_API_PATH env or contact your admin."
+            if last_status == 404:
+                tried = ", ".join(paths_to_try)
+                err_msg = (
+                    f"{err_msg} "
+                    f"Paths tried: {tried}. "
+                    "Set AUDIT_API_PATH (and optionally AUDIT_API_FALLBACK_PATHS) env vars, or contact your admin."
+                )
             return JSONResponse({"error": err_msg}, status_code=last_status or 502)
 
         # Parse first page (data already from successful request in loop)
@@ -914,7 +949,7 @@ async def health():
 async def audit_raw_sample(request: Request):
     """Return 5 raw (un-normalized) audit events so we can inspect the actual key structure."""
     base = AUDIT_API_HOST
-    headers = await _get_auth_headers(request)
+    headers = await get_auth_headers(request)
     paths = [AUDIT_API_PATH] + AUDIT_API_FALLBACK_PATHS
     for path in paths:
         url = f"{base}{path}" if path.startswith("/") else f"{base}/{path}"
